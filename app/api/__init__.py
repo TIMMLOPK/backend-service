@@ -8,12 +8,15 @@ from fastapi import APIRouter
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from starlette.responses import Response
 
 from app import settings
 from app.adapters import aws
 from app.adapters import mongodb
+from app.adapters import openai
 from app.adapters import redis
+from app.adapters import storage
 from app.utilities import logging
 
 from . import v1
@@ -27,12 +30,15 @@ def create_app() -> FastAPI:
 
     initialise_cors(app)
     initialise_aws(app)
+    initialise_openai(app)
+    initialise_storage(app)
     initialise_mongodb(app)
     initialise_redis(app)
     initialise_request_tracing(app)
     initialise_interruptions(app)
 
     create_routes(app)
+    mount_static_files(app)
 
     logger.debug("Finalised app instance.")
     return app
@@ -59,6 +65,28 @@ def initialise_cors(app: FastAPI) -> None:
 def initialise_aws(app: FastAPI) -> None:
     app.state.aws = aws.default()
     logger.debug("Attached AWS to the app instance.")
+
+
+def initialise_openai(app: FastAPI) -> None:
+    app.state.openai = openai.default()
+    logger.debug("Attached OpenAI to the app instance.")
+
+
+def initialise_storage(app: FastAPI) -> None:
+    adapter = storage.default()
+    adapter.ensure_base_directory()
+    app.state.storage = adapter
+    logger.debug("Attached storage adapter to the app instance.")
+
+
+def mount_static_files(app: FastAPI) -> None:
+    adapter = app.state.storage
+    app.mount(
+        "/content",
+        StaticFiles(directory=str(adapter.base_path)),
+        name="content",
+    )
+    logger.debug("Mounted static files at /content.")
 
 
 def create_routes(app: FastAPI) -> None:

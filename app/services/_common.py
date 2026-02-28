@@ -11,7 +11,13 @@ from fastapi import status
 
 from app.adapters.aws import AWSSessionAdapter
 from app.adapters.mongodb import ImplementsMongoDB
+from app.adapters.openai import OpenAIClientAdapter
 from app.adapters.redis import RedisClient
+from app.adapters.storage import StorageAdapter
+from app.resources import CourseAssignRepository
+from app.resources import CourseMaterialRepository
+from app.resources import CourseRepository
+from app.resources import QuizScoreRepository
 from app.resources import UserModel
 from app.resources import UserRepository
 
@@ -69,12 +75,44 @@ class AbstractContext(ABC):
     def _aws(self) -> AWSSessionAdapter: ...
 
     @property
+    @abstractmethod
+    def _openai(self) -> OpenAIClientAdapter: ...
+
+    @property
+    @abstractmethod
+    def _storage(self) -> StorageAdapter: ...
+
+    @property
     def aws(self) -> AWSSessionAdapter:
         return self._aws
 
     @property
+    def openai(self) -> OpenAIClientAdapter:
+        return self._openai
+
+    @property
+    def storage(self) -> StorageAdapter:
+        return self._storage
+
+    @property
     def users(self) -> UserRepository:
         return UserRepository(self._mongodb)
+
+    @property
+    def courses(self) -> CourseRepository:
+        return CourseRepository(self._mongodb)
+
+    @property
+    def course_assigns(self) -> CourseAssignRepository:
+        return CourseAssignRepository(self._mongodb)
+
+    @property
+    def course_materials(self) -> CourseMaterialRepository:
+        return CourseMaterialRepository(self._mongodb)
+
+    @property
+    def quiz_scores(self) -> QuizScoreRepository:
+        return QuizScoreRepository(self._mongodb)
 
 
 class AbstractAuthContext(AbstractContext):

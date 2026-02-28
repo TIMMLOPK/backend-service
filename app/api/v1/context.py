@@ -24,7 +24,9 @@ from fastapi.security import HTTPBearer
 from app.adapters.aws import AWSSessionAdapter
 from app.adapters.mongodb import ImplementsMongoDB
 from app.adapters.mongodb import MongoDBClientAdapter
+from app.adapters.openai import OpenAIClientAdapter
 from app.adapters.redis import RedisClient
+from app.adapters.storage import StorageAdapter
 from app.resources import UserModel
 from app.resources import UserRepository
 from app.resources import UserType
@@ -53,6 +55,16 @@ class HTTPContext(AbstractContext):
     @override
     def _aws(self) -> AWSSessionAdapter:
         return self.request.app.state.aws
+
+    @property
+    @override
+    def _openai(self) -> OpenAIClientAdapter:
+        return self.request.app.state.openai
+
+    @property
+    @override
+    def _storage(self) -> StorageAdapter:
+        return self.request.app.state.storage
 
 
 class HTTPAuthContext(HTTPContext, AbstractAuthContext):

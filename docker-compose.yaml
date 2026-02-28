@@ -31,11 +31,16 @@ services:
       - MONGODB_HOST=mongodb
       - MONGODB_PORT=27017
       - APP_COMPONENT=fastapi
+      - APP_DEV_MODE=true
+      - STORAGE_BASE_PATH=/data/content
     env_file:
       - ./configuration/app.env
       - ./configuration/aws.env
       - ./configuration/mongodb.env
       - ./configuration/redis.env
+    volumes:
+      - ./app:/app/app
+      - ${STORAGE_DATA_PATH}:/data/content
     depends_on:
       mongodb:
         condition: service_healthy
@@ -46,3 +51,19 @@ services:
       interval: 10s
       timeout: 1s
       retries: 2
+
+  frontend:
+    image: frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_EXTERNAL_PORT:-3000}:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://app:80
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      app:
+        condition: service_healthy

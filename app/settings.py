@@ -25,10 +25,18 @@ AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 
+# OpenAI configuration
+OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "Qwen/Qwen3-32B")
+
 # JWT configuration
 JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 JWT_EXPIRATION_MINUTES = int(os.environ.get("JWT_EXPIRATION_MINUTES", "1440"))  # 24h
+
+# Storage configuration
+STORAGE_BASE_PATH = os.environ.get("STORAGE_BASE_PATH", "/data/content")
 
 # CORS configuration (comma-separated list of origins, empty to disable)
 CORS_ALLOWED_ORIGINS: list[str] = [

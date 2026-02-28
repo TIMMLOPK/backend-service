@@ -48,6 +48,28 @@ class MongoDBClientAdapter(ImplementsMongoDB):
         users = self.collection("users")
         await users.create_index("username", unique=True)
         await users.create_index("email", unique=True)
+
+        courses = self.collection("courses")
+        await courses.create_index("topic")
+        await courses.create_index("publicity")
+        await courses.create_index("created_at")
+
+        course_assigns = self.collection("course_assigns")
+        await course_assigns.create_index("course_id")
+        await course_assigns.create_index("user_id")
+        await course_assigns.create_index(
+            [("course_id", 1), ("user_id", 1)],
+            unique=True,
+        )
+
+        course_materials = self.collection("course_materials")
+        await course_materials.create_index("course_id")
+        await course_materials.create_index([("course_id", 1), ("user_id", 1)])
+
+        quiz_scores = self.collection("quiz_scores")
+        await quiz_scores.create_index([("material_id", 1), ("user_id", 1)])
+        await quiz_scores.create_index("created_at")
+
         logger.info("Created MongoDB indexes.")
 
 
