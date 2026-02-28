@@ -1,0 +1,79 @@
+services:
+  mysql:
+    image: mysql:9
+    platform: linux/amd64  # Fix for M-series Mac compatibility
+    healthcheck:
+      test: "/usr/bin/mysql --user=$$MYSQL_USER --password=$$MYSQL_PASSWORD --execute \"SELECT 1;\""
+      interval: 2s
+      timeout: 20s
+      retries: 10
+    environment:
+      - MYSQL_TCP_PORT_3306_TCP=3306
+    env_file:
+      - ./configuration/mysql.env
+    volumes:
+      - ${MYSQL_DATA_PATH}:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    healthcheck:
+      test: "redis-cli ping"
+      interval: 2s
+      timeout: 20s
+      retries: 10
+  app:
+    image: app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${APP_EXTERNAL_PORT}:80"
+    environment:
+      - APP_HTTP_HOST=0.0.0.0
+      - APP_HTTP_PORT=80
+      - MYSQL_TCP_PORT=3306
+      - MYSQL_HOST=mysql
+      - APP_COMPONENT=fastapi
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DATABASE=0
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY:-}
+      - MINIMAX_GROUP_ID=${MINIMAX_GROUP_ID:-}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    env_file:
+      - ./configuration/app.env
+      - ./configuration/mysql.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    healthcheck:
+      test: "curl --fail http://localhost/api/v1/health/"
+      interval: 10s
+      timeout: 1s
+      retries: 2
+
+  # Cron
+  migrations:
+    image: migrations:latest
+    build:
+      context: ./migrations
+      dockerfile: Dockerfile
+    environment:
+      - MYSQL_TCP_PORT=3306
+      - MYSQL_HOST=mysql
+    env_file:
+      - ./configuration/mysql.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    # Volume for quick reloads during development
+    volumes:
+      - ./migrations/migrations:/migrations:ro
