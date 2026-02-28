@@ -12,9 +12,9 @@ from app.utilities import logging
 logger = logging.get_logger(__name__)
 
 
-def create_access_token(user_id: int) -> str:
+def create_access_token(user_id: str) -> str:
     payload = {
-        "sub": str(user_id),
+        "sub": user_id,
         "exp": datetime.now(timezone.utc)
         + timedelta(minutes=settings.JWT_EXPIRATION_MINUTES),
     }
@@ -25,15 +25,14 @@ def create_access_token(user_id: int) -> str:
     )
 
 
-def decode_access_token(token: str) -> int | None:
+def decode_access_token(token: str) -> str | None:
     try:
         payload = jwt.decode(
             token,
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
-        sub = payload.get("sub")
-        return int(sub) if sub is not None else None
+        return payload.get("sub")
     except jwt.PyJWTError:
         logger.exception("Token decode failed")
         return None

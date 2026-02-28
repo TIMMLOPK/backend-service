@@ -8,12 +8,12 @@ load_dotenv()
 
 APP_COMPONENT = os.environ["APP_COMPONENT"]
 
-# MySQL configuration
-MYSQL_HOST = os.environ["MYSQL_HOST"]  # Non-standard
-MYSQL_TCP_PORT = int(os.environ["MYSQL_TCP_PORT"])
-MYSQL_USER = os.environ["MYSQL_USER"]
-MYSQL_PASSWORD = os.environ["MYSQL_PASSWORD"]
-MYSQL_DATABASE = os.environ["MYSQL_DATABASE"]
+# MongoDB configuration
+MONGODB_HOST = os.environ["MONGODB_HOST"]  # Non-standard
+MONGODB_PORT = int(os.environ["MONGODB_PORT"])  # Non-standard
+MONGODB_USER = os.environ["MONGO_INITDB_ROOT_USERNAME"]
+MONGODB_PASSWORD = os.environ["MONGO_INITDB_ROOT_PASSWORD"]
+MONGODB_DATABASE = os.environ["MONGO_INITDB_DATABASE"]
 
 # Redis configuration
 REDIS_HOST = os.environ["REDIS_HOST"]  # Non-standard

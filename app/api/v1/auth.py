@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from app.api.v1 import response
 from app.api.v1.context import RequiresAuth
 from app.api.v1.context import RequiresContext
-from app.api.v1.context import RequiresTransaction
 from app.services import auth
 
 router = APIRouter(
@@ -28,7 +27,7 @@ class LoginRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id: int
+    id: str
     username: str
     full_name: str
     email: str
@@ -59,7 +58,7 @@ async def me(
 
 @router.post("/register", response_model=RegisterResponse)
 async def register(
-    ctx: RequiresTransaction,
+    ctx: RequiresContext,
     body: RegisterRequest,
 ) -> Response:
     result = await auth.register(

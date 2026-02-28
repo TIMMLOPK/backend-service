@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Learning platform backend (hackathon project). Features AI-powered adaptive learning with AWS Bedrock/AgentCore, content generation, progress tracking, and gamification. Supports content from primary school to university level.
 
-**Tech stack:** Python 3.13, FastAPI, MySQL 9, Redis, Docker, AWS Bedrock (AgentCore).
+**Tech stack:** Python 3.13, FastAPI, MongoDB 8, Redis, Docker, AWS Bedrock (AgentCore).
 
 ## Commands
 
@@ -15,7 +15,7 @@ make build              # Build Docker images
 make run                # Run app (foreground)
 make run-d              # Run app (background)
 make lint               # Pre-commit hooks on all files (black, isort, autoflake, pyupgrade)
-make phpmyadmin         # Start PHPMyAdmin (dev)
+make mongo-express      # Start Mongo Express (dev)
 
 # Run a specific pre-commit hook
 pre-commit run black --all-files
@@ -23,13 +23,13 @@ pre-commit run black --all-files
 
 ## Architecture
 
-**One-way data flow:** `API routes → Services → Resources (repositories) → Adapters (MySQL/Redis)`
+**One-way data flow:** `API routes → Services → Resources (repositories) → Adapters (MongoDB/Redis)`
 
-- **`app/adapters/`** — Database/service connection wrappers. `MySQLPoolAdapter` (connection pool), `MySQLTransaction` (explicit transactions), `RedisClient` (with PubSub router), `AWSSessionAdapter` (aiobotocore session for Bedrock, S3, etc.).
-- **`app/resources/`** — Repository classes. Each takes an `ImplementsMySQL` via constructor injection. Uses Pydantic models for row data.
+- **`app/adapters/`** — Database/service connection wrappers. `MongoDBClientAdapter` (client connection), `MongoDBTransaction` (explicit transactions), `RedisClient` (with PubSub router), `AWSSessionAdapter` (aiobotocore session for Bedrock, S3, etc.).
+- **`app/resources/`** — Repository classes. Each takes an `ImplementsMongoDB` via constructor injection. Uses Pydantic models for document data.
 - **`app/services/`** — Business logic as module-level async functions that take `AbstractContext` as first arg. Return `ServiceError.OnSuccess[T]` (union of `T | ServiceError`) instead of raising exceptions.
 - **`app/api/v1/`** — FastAPI routers. Endpoints call services and use `response.unwrap()` to convert `ServiceError` into HTTP error responses.
-- **`app/api/v1/context.py`** — Dependency injection. `RequiresContext` for reads (pool), `RequiresTransaction` for writes (transaction with auto-commit/rollback).
+- **`app/api/v1/context.py`** — Dependency injection. `RequiresContext` for reads (client), `RequiresTransaction` for writes (transaction with auto-commit/rollback).
 
 ### Adding a New Feature
 
@@ -38,7 +38,7 @@ pre-commit run black --all-files
 3. Create service module in `app/services/` with error enum (extends `ServiceError`) and async functions
 4. Create router in `app/api/v1/` using `RequiresContext` or `RequiresTransaction`
 5. Register router in `app/api/v1/__init__.py`'s `create_router()`
-6. Create migration files in `migrations/migrations/{unix_timestamp}_{name}.{up,down}.sql`
+6. Add indexes in `MongoDBClientAdapter.create_indexes()` if needed
 
 ### Service Error Pattern
 
@@ -57,7 +57,7 @@ class MyError(ServiceError):
                 return 500
 
 
-async def get_thing(ctx: AbstractContext, id: int) -> MyError.OnSuccess[Thing]:
+async def get_thing(ctx: AbstractContext, id: str) -> MyError.OnSuccess[Thing]:
     thing = await ctx.things.find_by_id(id)
     if thing is None:
         return MyError.NOT_FOUND
@@ -69,7 +69,6 @@ async def get_thing(ctx: AbstractContext, id: int) -> MyError.OnSuccess[Thing]:
 - **DO NOT** add `from __future__ import annotations` to `app/api/v1/context.py` — it breaks FastAPI's runtime type introspection for dependency injection. All other files use it.
 - Middleware runs in **reverse registration order**. Request tracing is registered last so it runs first.
 - Redis PubSub handlers must be registered **before** calling `redis.initialise()`.
-- The `databases` library workaround: row results use `._mapping` directly to avoid DeprecationWarning.
 
 ## Code Style
 

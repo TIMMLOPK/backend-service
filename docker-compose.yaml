@@ -1,18 +1,15 @@
 services:
-  mysql:
-    image: mysql:9
-    platform: linux/amd64  # Fix for M-series Mac compatibility
+  mongodb:
+    image: mongo:8
     healthcheck:
-      test: "/usr/bin/mysql --user=$$MYSQL_USER --password=$$MYSQL_PASSWORD --execute \"SELECT 1;\""
+      test: mongosh --eval 'db.runCommand("ping").ok' --quiet
       interval: 2s
       timeout: 20s
       retries: 10
-    environment:
-      - MYSQL_TCP_PORT_3306_TCP=3306
     env_file:
-      - ./configuration/mysql.env
+      - ./configuration/mongodb.env
     volumes:
-      - ${MYSQL_DATA_PATH}:/var/lib/mysql
+      - ${MONGODB_DATA_PATH}:/data/db
 
   redis:
     image: redis:latest
@@ -31,42 +28,21 @@ services:
     environment:
       - APP_HTTP_HOST=0.0.0.0
       - APP_HTTP_PORT=80
-      - MYSQL_TCP_PORT=3306
-      - MYSQL_HOST=mysql
+      - MONGODB_HOST=mongodb
+      - MONGODB_PORT=27017
       - APP_COMPONENT=fastapi
     env_file:
       - ./configuration/app.env
       - ./configuration/aws.env
-      - ./configuration/mysql.env
+      - ./configuration/mongodb.env
       - ./configuration/redis.env
     depends_on:
-      mysql:
+      mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
-      migrations:
-        condition: service_completed_successfully
     healthcheck:
       test: "curl --fail http://localhost/api/v1/health/"
       interval: 10s
       timeout: 1s
       retries: 2
-
-  # Cron
-  migrations:
-    image: migrations:latest
-    build:
-      context: ./migrations
-      dockerfile: Dockerfile
-    environment:
-      - MYSQL_TCP_PORT=3306
-      - MYSQL_HOST=mysql
-    env_file:
-      - ./configuration/mysql.env
-    depends_on:
-      mysql:
-        condition: service_healthy
-
-    # Volume for quick reloads during development
-    volumes:
-      - ./migrations/migrations:/migrations:ro

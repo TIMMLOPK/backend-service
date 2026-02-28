@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
+from bson import ObjectId
 from pydantic import BaseModel
 
-from app.adapters.mysql import ImplementsMySQL
+from app.adapters.mongodb import ImplementsMongoDB
 
 
 class UserModel(BaseModel):
-    id: int
+    id: str
     username: str
     full_name: str
     email: str
@@ -16,11 +18,22 @@ class UserModel(BaseModel):
     created_at: datetime
 
 
-class UserRepository:
-    __slots__ = ("_mysql",)
+def _to_model(document: dict[str, Any]) -> UserModel:
+    return UserModel(
+        id=str(document["_id"]),
+        username=document["username"],
+        full_name=document["full_name"],
+        email=document["email"],
+        password=document["password"],
+        created_at=document["created_at"],
+    )
 
-    def __init__(self, mysql: ImplementsMySQL) -> None:
-        self._mysql = mysql
+
+class UserRepository:
+    __slots__ = ("_mongodb",)
+
+    def __init__(self, mongodb: ImplementsMongoDB) -> None:
+        self._mongodb = mongodb
 
     async def create(
         self,
@@ -31,19 +44,16 @@ class UserRepository:
         create_at: datetime | None = None,
     ) -> UserModel:
         create_at = create_at or datetime.now()
-        user_id = await self._mysql.execute(
-            "INSERT INTO users (username, full_name, email, password, created_at) "
-            "VALUES (:username, :full_name, :email, :password, :created_at)",
-            {
-                "username": username,
-                "full_name": full_name,
-                "email": email,
-                "password": password,
-                "created_at": create_at,
-            },
-        )
+        document = {
+            "username": username,
+            "full_name": full_name,
+            "email": email,
+            "password": password,
+            "created_at": create_at,
+        }
+        result = await self._mongodb.collection("users").insert_one(document)
         return UserModel(
-            id=user_id,
+            id=str(result.inserted_id),
             username=username,
             full_name=full_name,
             email=email,
@@ -51,23 +61,20 @@ class UserRepository:
             created_at=create_at,
         )
 
-    async def find_by_id(self, id: int) -> UserModel | None:
-        user = await self._mysql.fetch_one(
-            "SELECT id, username, full_name, email, password, created_at FROM users WHERE id = :id",
-            {"id": id},
+    async def find_by_id(self, id: str) -> UserModel | None:
+        document = await self._mongodb.collection("users").find_one(
+            {"_id": ObjectId(id)},
         )
-        return UserModel(**user) if user else None
+        return _to_model(document) if document else None
 
     async def find_by_username(self, username: str) -> UserModel | None:
-        user = await self._mysql.fetch_one(
-            "SELECT id, username, full_name, email, password, created_at FROM users WHERE username = :username",
+        document = await self._mongodb.collection("users").find_one(
             {"username": username},
         )
-        return UserModel(**user) if user else None
+        return _to_model(document) if document else None
 
     async def find_by_email(self, email: str) -> UserModel | None:
-        user = await self._mysql.fetch_one(
-            "SELECT id, username, full_name, email, password, created_at FROM users WHERE email = :email",
+        document = await self._mongodb.collection("users").find_one(
             {"email": email},
         )
-        return UserModel(**user) if user else None
+        return _to_model(document) if document else None

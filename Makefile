@@ -18,5 +18,5 @@ test-cov:
 	python3 -m pytest tests/ -v --cov=app --cov-report=term-missing
 
 # Development tools
-phpmyadmin:
-	docker compose --profile dev up phpmyadmin
+mongo-express:
+	docker compose --profile dev up mongo-express

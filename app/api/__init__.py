@@ -12,7 +12,7 @@ from starlette.responses import Response
 
 from app import settings
 from app.adapters import aws
-from app.adapters import mysql
+from app.adapters import mongodb
 from app.adapters import redis
 from app.utilities import logging
 
@@ -27,7 +27,7 @@ def create_app() -> FastAPI:
 
     initialise_cors(app)
     initialise_aws(app)
-    initialise_mysql(app)
+    initialise_mongodb(app)
     initialise_redis(app)
     initialise_request_tracing(app)
     initialise_interruptions(app)
@@ -72,25 +72,29 @@ def create_routes(app: FastAPI) -> None:
     logger.debug("Attached routers to the app instance.")
 
 
-def initialise_mysql(app: FastAPI) -> None:
-    database = mysql.default()
+def initialise_mongodb(app: FastAPI) -> None:
+    database = mongodb.default()
 
-    app.state.mysql = database
+    app.state.mongodb = database
 
     # Lifecycle management
     @app.on_event("startup")
     async def on_startup() -> None:
-        await app.state.mysql.connect()
+        await app.state.mongodb.connect()
         logger.info(
-            "Connected to the MySQL database.",
+            "Connected to the MongoDB database.",
+        )
+        await app.state.mongodb.create_indexes()
+        logger.info(
+            "MongoDB indexes created.",
         )
 
     @app.on_event("shutdown")
     async def on_shutdown() -> None:
-        await app.state.mysql.disconnect()
+        await app.state.mongodb.disconnect()
 
     logger.debug(
-        "Attached MySQL to the app instance.",
+        "Attached MongoDB to the app instance.",
     )
 
 

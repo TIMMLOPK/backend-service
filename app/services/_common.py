@@ -10,7 +10,7 @@ from typing import TypeIs
 from fastapi import status
 
 from app.adapters.aws import AWSSessionAdapter
-from app.adapters.mysql import ImplementsMySQL
+from app.adapters.mongodb import ImplementsMongoDB
 from app.adapters.redis import RedisClient
 from app.resources import UserModel
 from app.resources import UserRepository
@@ -58,7 +58,7 @@ class AbstractContext(ABC):
 
     @property
     @abstractmethod
-    def _mysql(self) -> ImplementsMySQL: ...
+    def _mongodb(self) -> ImplementsMongoDB: ...
 
     @property
     @abstractmethod
@@ -74,7 +74,7 @@ class AbstractContext(ABC):
 
     @property
     def users(self) -> UserRepository:
-        return UserRepository(self._mysql)
+        return UserRepository(self._mongodb)
 
 
 class AbstractAuthContext(AbstractContext):

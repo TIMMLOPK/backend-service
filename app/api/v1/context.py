@@ -10,7 +10,6 @@
 # that define FastAPI dependencies. All other files in this codebase use it.
 # =============================================================================
 
-from collections.abc import AsyncGenerator
 from typing import Annotated
 from typing import override
 
@@ -22,8 +21,8 @@ from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.security import HTTPBearer
 
 from app.adapters.aws import AWSSessionAdapter
-from app.adapters.mysql import ImplementsMySQL
-from app.adapters.mysql import MySQLPoolAdapter
+from app.adapters.mongodb import ImplementsMongoDB
+from app.adapters.mongodb import MongoDBClientAdapter
 from app.adapters.redis import RedisClient
 from app.resources import UserModel
 from app.resources import UserRepository
@@ -33,15 +32,15 @@ from app.utilities import tokens
 
 
 class HTTPContext(AbstractContext):
-    """Context for read-only operations using the connection pool directly."""
+    """Context for read-only operations using the client directly."""
 
     def __init__(self, request: Request) -> None:
         self.request = request
 
     @property
     @override
-    def _mysql(self) -> ImplementsMySQL:
-        return self.request.app.state.mysql
+    def _mongodb(self) -> ImplementsMongoDB:
+        return self.request.app.state.mongodb
 
     @property
     @override
@@ -54,75 +53,11 @@ class HTTPContext(AbstractContext):
         return self.request.app.state.aws
 
 
-class HTTPTransactionContext(AbstractContext):
-    """Context for write operations using an explicit transaction."""
-
-    def __init__(
-        self,
-        mysql: ImplementsMySQL,
-        redis: RedisClient,
-        aws: AWSSessionAdapter,
-    ) -> None:
-        self._mysql_conn = mysql
-        self._redis_conn = redis
-        self._aws_session = aws
-
-    @property
-    @override
-    def _mysql(self) -> ImplementsMySQL:
-        return self._mysql_conn
-
-    @property
-    @override
-    def _redis(self) -> RedisClient:
-        return self._redis_conn
-
-    @property
-    @override
-    def _aws(self) -> AWSSessionAdapter:
-        return self._aws_session
-
-
-async def _get_transaction_context(
-    request: Request,
-) -> AsyncGenerator[HTTPTransactionContext, None]:
-    """Dependency that provides a context with an active database transaction."""
-    pool: MySQLPoolAdapter = request.app.state.mysql
-    redis_client: RedisClient = request.app.state.redis
-    aws_session: AWSSessionAdapter = request.app.state.aws
-
-    async with pool.transaction() as transaction:
-        yield HTTPTransactionContext(
-            transaction,
-            redis_client,
-            aws_session,
-        )
-
-
 class HTTPAuthContext(HTTPContext, AbstractAuthContext):
-    """Context for authenticated read-only operations."""
+    """Context for authenticated operations."""
 
     def __init__(self, request: Request, user: UserModel) -> None:
         super().__init__(request)
-        self._user_model = user
-
-    @property
-    @override
-    def user(self) -> UserModel:
-        return self._user_model
-
-
-class HTTPAuthTransactionContext(HTTPTransactionContext, AbstractAuthContext):
-    """Context for authenticated write operations with a transaction."""
-
-    def __init__(
-        self,
-        mysql: ImplementsMySQL,
-        redis: RedisClient,
-        aws: AWSSessionAdapter,
-        user: UserModel,
-    ) -> None:
-        super().__init__(mysql, redis, aws)
         self._user_model = user
 
     @property
@@ -151,8 +86,8 @@ async def _get_authenticated_user(
             detail="Invalid or expired token",
         )
 
-    pool: MySQLPoolAdapter = request.app.state.mysql
-    user_repo = UserRepository(pool)
+    adapter: MongoDBClientAdapter = request.app.state.mongodb
+    user_repo = UserRepository(adapter)
     user = await user_repo.find_by_id(user_id)
     if user is None:
         raise HTTPException(
@@ -170,37 +105,8 @@ def _get_auth_context(
     return HTTPAuthContext(request, user)
 
 
-async def _get_auth_transaction_context(
-    request: Request,
-    user: UserModel = Depends(_get_authenticated_user),
-) -> AsyncGenerator[HTTPAuthTransactionContext, None]:
-    pool: MySQLPoolAdapter = request.app.state.mysql
-    redis_client: RedisClient = request.app.state.redis
-    aws_session: AWSSessionAdapter = request.app.state.aws
-
-    async with pool.transaction() as transaction:
-        yield HTTPAuthTransactionContext(
-            transaction,
-            redis_client,
-            aws_session,
-            user,
-        )
-
-
 RequiresContext = Annotated[HTTPContext, Depends(HTTPContext)]
-"""A type alias for read-only operations using the connection pool."""
-
-RequiresTransaction = Annotated[
-    HTTPTransactionContext,
-    Depends(_get_transaction_context),
-]
-"""A type alias for write operations that require an explicit database transaction."""
+"""A type alias for read-only operations using the client."""
 
 RequiresAuth = Annotated[HTTPAuthContext, Depends(_get_auth_context)]
-"""A type alias for authenticated read-only operations."""
-
-RequiresAuthTransaction = Annotated[
-    HTTPAuthTransactionContext,
-    Depends(_get_auth_transaction_context),
-]
-"""A type alias for authenticated write operations that require a transaction."""
+"""A type alias for authenticated operations."""
