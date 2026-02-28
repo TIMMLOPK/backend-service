@@ -41,8 +41,8 @@ export default function ChildrenPage() {
 
       {dependants.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-100 mb-4">
-            <Users className="h-8 w-8 text-violet-600" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20 mb-4">
+            <Users className="h-8 w-8" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-1">
             No children added yet

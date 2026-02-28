@@ -1,4 +1,4 @@
-import { clsx } from "clsx";
+import { cn } from "@/lib/utils";
 
 interface AvatarProps {
   name: string;
@@ -24,8 +24,8 @@ function getInitials(name: string): string {
 export function Avatar({ name, size = "md", className }: AvatarProps) {
   return (
     <div
-      className={clsx(
-        "flex items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 font-semibold text-white shrink-0",
+      className={cn(
+        "flex items-center justify-center rounded-full bg-primary/20 font-semibold text-primary shrink-0",
         sizeStyles[size],
         className,
       )}

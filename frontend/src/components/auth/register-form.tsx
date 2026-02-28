@@ -3,16 +3,50 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { GraduationCap, Users } from "lucide-react";
-import { clsx } from "clsx";
+import {
+  IconBrandGithub,
+  IconBrandGoogle,
+  IconSchool,
+  IconUsers,
+} from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { ApiError, getErrorMessage } from "@/lib/api";
 import { ROUTES } from "@/lib/constants";
 
 type AccountType = "student" | "parent";
 
+const ROLES: {
+  id: AccountType;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    id: "student",
+    label: "Student",
+    description: "I want to learn",
+    icon: <IconSchool className="size-5" />,
+  },
+  {
+    id: "parent",
+    label: "Parent",
+    description: "Monitor my child",
+    icon: <IconUsers className="size-5" />,
+  },
+];
 
 export function RegisterForm() {
   const router = useRouter();
@@ -47,103 +81,146 @@ export function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="space-y-1">
-        <h2 className="text-2xl font-bold text-gray-900">Create account</h2>
-        <p className="text-sm text-gray-500">
-          Start your personalised learning experience
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-center space-y-1">
+        <h1 className="text-3xl font-bold tracking-tight">Create your account</h1>
+        <p className="text-muted-foreground">
+          Start your personalised learning journey today
         </p>
       </div>
 
-      {error && (
-        <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      <Card className="p-0">
+        <CardHeader className="px-6 pt-6 pb-4">
+          <CardTitle className="text-base">I am a...</CardTitle>
+        </CardHeader>
+        <CardContent className="px-6 pb-0 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            {ROLES.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => setUserType(r.id)}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-all hover:border-primary/50 cursor-pointer",
+                  userType === r.id
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-border text-muted-foreground",
+                )}
+              >
+                {r.icon}
+                <span className="text-xs font-medium">{r.label}</span>
+                <span className="text-[10px] leading-tight">{r.description}</span>
+              </button>
+            ))}
+          </div>
 
-      {/* Account type toggle */}
-      <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-gray-700">
-          I am a...
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setUserType("student")}
-            className={clsx(
-              "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer",
-              userType === "student"
-                ? "border-violet-500 bg-violet-50 text-violet-700"
-                : "border-gray-200 text-gray-500 hover:border-gray-300",
-            )}
-          >
-            <GraduationCap className="h-6 w-6" />
-            <span className="text-sm font-medium">Student</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setUserType("parent")}
-            className={clsx(
-              "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all duration-200 cursor-pointer",
-              userType === "parent"
-                ? "border-violet-500 bg-violet-50 text-violet-700"
-                : "border-gray-200 text-gray-500 hover:border-gray-300",
-            )}
-          >
-            <Users className="h-6 w-6" />
-            <span className="text-sm font-medium">Parent</span>
-          </button>
-        </div>
-      </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="outline" type="button" className="w-full">
+              <IconBrandGoogle className="size-4" />
+              Google
+            </Button>
+            <Button variant="outline" type="button" className="w-full">
+              <IconBrandGithub className="size-4" />
+              GitHub
+            </Button>
+          </div>
 
-      <Input
-        label="Full Name"
-        placeholder="John Doe"
-        value={fullName}
-        onChange={(e) => setFullName(e.target.value)}
-        required
-      />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <Separator />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                or sign up with email
+              </span>
+            </div>
+          </div>
 
-      <Input
-        label="Username"
-        placeholder="johndoe"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        required
-      />
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Input
-        label="Email"
-        type="email"
-        placeholder="you@example.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
+          <form onSubmit={handleSubmit} className="space-y-3 pb-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="fullName">Full name</Label>
+              <Input
+                id="fullName"
+                placeholder="Alex Chen"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                autoComplete="name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                placeholder="alexchen"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                autoComplete="username"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Min. 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                autoComplete="new-password"
+              />
+            </div>
 
-      <Input
-        label="Password"
-        type="password"
-        placeholder="Create a password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        minLength={6}
-      />
+            <Button type="submit" className="w-full" loading={loading}>
+              Create account
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="px-6 py-4 justify-center">
+          <CardDescription>
+            Already have an account?{" "}
+            <Link
+              href={ROUTES.LOGIN}
+              className="text-primary font-medium hover:underline"
+            >
+              Sign in
+            </Link>
+          </CardDescription>
+        </CardFooter>
+      </Card>
 
-      <Button type="submit" loading={loading} className="w-full">
-        Create Account
-      </Button>
-
-      <p className="text-center text-sm text-gray-500">
-        Already have an account?{" "}
+      <p className="text-center text-xs text-muted-foreground">
+        By creating an account, you agree to our{" "}
         <Link
-          href={ROUTES.LOGIN}
-          className="font-medium text-violet-600 hover:text-violet-700"
+          href="/terms"
+          className="underline underline-offset-4 hover:text-foreground"
         >
-          Sign in
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link
+          href="/privacy"
+          className="underline underline-offset-4 hover:text-foreground"
+        >
+          Privacy Policy
         </Link>
       </p>
-    </form>
+    </div>
   );
 }

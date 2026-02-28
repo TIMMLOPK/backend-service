@@ -11,7 +11,7 @@ const actions = [
     description: "Explore AI-generated courses on any topic",
     href: ROUTES.COURSES,
     icon: <Library className="h-6 w-6" />,
-    gradient: "from-violet-500 to-indigo-500",
+    gradient: "from-primary to-primary-foreground",
   },
   {
     label: "Create with AI",

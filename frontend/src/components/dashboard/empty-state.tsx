@@ -10,8 +10,8 @@ export function EmptyState() {
   return (
     <Card className="p-12">
       <div className="flex flex-col items-center text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 mb-4">
-          <GraduationCap className="h-8 w-8 text-violet-600" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/20 mb-4">
+          <GraduationCap className="h-8 w-8" />
         </div>
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
           Start your learning journey

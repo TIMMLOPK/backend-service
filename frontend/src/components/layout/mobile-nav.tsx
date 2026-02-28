@@ -74,7 +74,7 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-foreground">
               <BookOpen className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900">Mentova</span>
@@ -99,7 +99,7 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
                 className={clsx(
                   "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200",
                   active
-                    ? "bg-violet-50 text-violet-700"
+                    ? "bg-primary/10 text-primary"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
                 )}
               >

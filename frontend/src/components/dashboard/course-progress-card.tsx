@@ -43,7 +43,7 @@ export function CourseProgressCard({ course, progress }: CourseProgressCardProps
           </div>
           <div className="h-2 w-full rounded-full bg-gray-100">
             <div
-              className="h-2 rounded-full bg-violet-500 transition-all duration-300"
+              className="h-2 rounded-full bg-primary/80 transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>

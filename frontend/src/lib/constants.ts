@@ -19,12 +19,12 @@ export const USER_TYPE_LABELS: Record<UserType, string> = {
 
 export const TOPIC_COLORS: Record<TopicCategory, { bg: string; text: string }> =
   {
-    Mathematics: { bg: "bg-violet-100", text: "text-violet-700" },
+    Mathematics: { bg: "bg-primary/20", text: "text-primary-foreground" },
     Science: { bg: "bg-emerald-100", text: "text-emerald-700" },
     English: { bg: "bg-sky-100", text: "text-sky-700" },
     History: { bg: "bg-amber-100", text: "text-amber-700" },
     Geography: { bg: "bg-teal-100", text: "text-teal-700" },
-    "Computer Science": { bg: "bg-indigo-100", text: "text-indigo-700" },
+    "Computer Science": { bg: "bg-primary/20", text: "text-primary-foreground" },
     Art: { bg: "bg-pink-100", text: "text-pink-700" },
     Music: { bg: "bg-rose-100", text: "text-rose-700" },
     Languages: { bg: "bg-cyan-100", text: "text-cyan-700" },

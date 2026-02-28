@@ -1,7 +1,7 @@
 "use client";
 
-import { CreateWizard } from "@/components/courses/create-wizard";
+import { redirect } from "next/navigation";
 
 export default function CreateCoursePage() {
-  return <CreateWizard />;
+  redirect("/courses");
 }

@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { NativeSelect as Select } from "@/components/ui/native-select";
 import { Card } from "@/components/ui/card";
 import { api, ApiError, getErrorMessage } from "@/lib/api";
 import type { GenerateCourseResponse, CourseDifficulty, CourseType } from "@/lib/types";
@@ -137,7 +137,7 @@ export function CreateWizard() {
   const PhaseIcon = currentPhase.icon;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="max-w-2xl mx-auto space-y-8 pt-8">
       {/* Step indicator */}
       <div className="flex items-center justify-between">
         {STEPS.map((s, i) => (
@@ -147,9 +147,9 @@ export function CreateWizard() {
                 className={clsx(
                   "flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-all",
                   i < step
-                    ? "bg-violet-600 text-white"
+                    ? "bg-primary text-primary-foreground"
                     : i === step
-                      ? "bg-violet-100 text-violet-700 ring-2 ring-violet-600"
+                      ? "bg-primary/20 text-primary-foreground ring-2 ring-primary/20"
                       : "bg-gray-100 text-gray-400",
                 )}
               >
@@ -158,7 +158,7 @@ export function CreateWizard() {
               <span
                 className={clsx(
                   "text-xs mt-1.5 hidden sm:block",
-                  i <= step ? "text-violet-700 font-medium" : "text-gray-400",
+                  i <= step ? "text-muted-foreground font-medium" : "text-gray-400",
                 )}
               >
                 {s.label}
@@ -168,7 +168,7 @@ export function CreateWizard() {
               <div
                 className={clsx(
                   "h-0.5 w-8 sm:w-16 mx-2",
-                  i < step ? "bg-violet-600" : "bg-gray-200",
+                  i < step ? "bg-primary" : "bg-gray-200",
                 )}
               />
             )}
@@ -206,7 +206,7 @@ export function CreateWizard() {
                     className={clsx(
                       "rounded-full px-3 py-1.5 text-xs font-medium transition-all cursor-pointer",
                       topic === t
-                        ? "bg-violet-600 text-white"
+                        ? "bg-primary text-primary-foreground"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200",
                     )}
                   >
@@ -247,7 +247,7 @@ export function CreateWizard() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 placeholder="Any specific areas you'd like covered..."
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-100 resize-none"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition-all resize-none"
               />
             </div>
           </div>
@@ -261,7 +261,7 @@ export function CreateWizard() {
             <p className="text-sm text-gray-500">
               Optionally upload notes, textbooks, or slides to guide the AI.
             </p>
-            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-10 text-center transition-colors hover:border-violet-300 hover:bg-violet-50/30">
+            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-10 text-center transition-colors hover:border-primary/20 hover:bg-primary/20/30">
               <Upload className="h-10 w-10 text-gray-300 mb-3" />
               <p className="text-sm font-medium text-gray-600">
                 Drag & drop files here
@@ -282,8 +282,8 @@ export function CreateWizard() {
 
         {step === 3 && !generating && (
           <div className="space-y-4 text-center py-4">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-violet-100">
-              <Sparkles className="h-8 w-8 text-violet-600" />
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
+              <Sparkles className="h-8 w-8 text-primary-foreground" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900">
               Ready to generate!
@@ -322,10 +322,10 @@ export function CreateWizard() {
         {step === 3 && generating && (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <div className="relative">
-              <div className="h-20 w-20 rounded-full bg-violet-100 flex items-center justify-center transition-all duration-500">
-                <PhaseIcon className="h-8 w-8 text-violet-600 transition-all duration-500" />
+              <div className="h-20 w-20 rounded-full bg-primary/20 flex items-center justify-center transition-all duration-500">
+                <PhaseIcon className="h-8 w-8 text-primary-foreground transition-all duration-500" />
               </div>
-              <div className="absolute -inset-3 rounded-full border-2 border-violet-300 border-t-violet-600 animate-spin" />
+              <div className="absolute -inset-3 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900">
               Generating your course...
@@ -334,7 +334,7 @@ export function CreateWizard() {
               Our AI agents are crafting lessons, quizzes, and flashcards
               tailored just for you. This usually takes 20–40 seconds.
             </p>
-            <div className="flex items-center gap-2 text-sm text-violet-600 transition-all duration-500">
+            <div className="flex items-center gap-2 text-sm text-primary-foreground transition-all duration-500">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="transition-all duration-500">{currentPhase.text}</span>
             </div>

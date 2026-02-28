@@ -1,22 +1,108 @@
-import { clsx } from "clsx";
-import type { HTMLAttributes, ReactNode } from "react";
+import * as React from "react";
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
+import { cn } from "@/lib/utils";
+
+function Card({
+  className,
+  size = "default",
+  hover,
+  ...props
+}: React.ComponentProps<"div"> & {
+  size?: "default" | "sm";
   hover?: boolean;
-}
-
-export function Card({ children, hover = false, className, ...props }: CardProps) {
+}) {
   return (
     <div
-      className={clsx(
-        "rounded-2xl bg-white shadow-sm border border-gray-100",
-        hover && "transition-all duration-200 hover:shadow-md hover:scale-[1.02] hover:border-violet-100",
+      data-slot="card"
+      data-size={size}
+      className={cn(
+        "ring-foreground/10 bg-card text-card-foreground group/card overflow-hidden rounded-xl text-sm shadow-xs ring-1",
+        hover && "transition-shadow hover:shadow-md cursor-pointer",
         className,
       )}
       {...props}
-    >
-      {children}
-    </div>
+    />
   );
 }
+
+function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-header"
+      className={cn(
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-6 group-data-[size=sm]/card:px-4 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-6 group-data-[size=sm]/card:[.border-b]:pb-4",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn(
+        "text-base leading-normal font-medium group-data-[size=sm]/card:text-sm",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  );
+}
+
+function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn(
+        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("px-6 group-data-[size=sm]/card:px-4", className)}
+      {...props}
+    />
+  );
+}
+
+function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn(
+        "flex items-center rounded-b-xl px-6 group-data-[size=sm]/card:px-4 [.border-t]:pt-6 group-data-[size=sm]/card:[.border-t]:pt-4",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+};

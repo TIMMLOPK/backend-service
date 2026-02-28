@@ -22,10 +22,7 @@ export function ChildCard({ child }: ChildCardProps) {
             <span className="truncate">{child.email}</span>
           </div>
           <div className="mt-2">
-            <Badge
-              bg="bg-violet-100"
-              text="text-violet-700"
-            >
+            <Badge>
               @{child.username}
             </Badge>
           </div>

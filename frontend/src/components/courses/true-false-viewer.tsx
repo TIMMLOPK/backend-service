@@ -63,7 +63,7 @@ export function TrueFalseViewer({ data, onComplete }: TrueFalseViewerProps) {
         </div>
         <p className="text-lg font-semibold text-gray-900">Complete!</p>
         <p className="text-gray-600">
-          You scored <span className="font-bold text-violet-600">{score}/{statements.length}</span> ({pct}%)
+          You scored <span className="font-bold text-primary">{score}/{statements.length}</span> ({pct}%)
         </p>
         <Button
           variant="secondary"

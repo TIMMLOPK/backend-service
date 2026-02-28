@@ -8,8 +8,8 @@ import type { Recommendation } from "@/lib/hooks/use-dashboard";
 const RECOMMENDATION_CONFIG = {
   continue: {
     icon: PlayCircle,
-    bg: "bg-violet-50",
-    iconColor: "text-violet-600",
+    bg: "bg-primary/10",
+    iconColor: "text-primary",
     label: "Continue",
   },
   review: {

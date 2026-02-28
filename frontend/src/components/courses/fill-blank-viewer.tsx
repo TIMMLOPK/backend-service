@@ -102,7 +102,7 @@ export function FillBlankViewer({ sections, onComplete }: FillBlankViewerProps) 
               className={clsx(
                 "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
                 activeSectionIndex === idx
-                  ? "bg-violet-600 text-white shadow-sm"
+                  ? "bg-primary text-white shadow-sm"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200",
               )}
             >
@@ -147,7 +147,7 @@ export function FillBlankViewer({ sections, onComplete }: FillBlankViewerProps) 
                           ? state.results[currentBlank]
                             ? "border-green-400 bg-green-50 text-green-700"
                             : "border-red-400 bg-red-50 text-red-700"
-                          : "border-gray-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-100",
+                          : "border-gray-200 focus:border-primary/60 focus:ring-2 focus:ring-primary/20",
                       )}
                     />
                     {state.checked &&

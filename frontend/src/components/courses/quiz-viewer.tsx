@@ -193,12 +193,12 @@ export function QuizViewer({ sections, courseId, materialId, onComplete }: QuizV
 
     return (
       <div className="flex flex-col items-center space-y-6 py-8">
-        <div className="h-20 w-20 rounded-full bg-violet-100 flex items-center justify-center">
-          <Trophy className="h-10 w-10 text-violet-600" />
+        <div className="h-20 w-20 rounded-full bg-primary/20 flex items-center justify-center">
+          <Trophy className="h-10 w-10 text-primary" />
         </div>
         <h3 className="text-2xl font-bold text-gray-900">Quiz Complete!</h3>
         <div className="text-center space-y-1">
-          <p className="text-4xl font-bold text-violet-600">{percentage}%</p>
+          <p className="text-4xl font-bold text-primary">{percentage}%</p>
           <p className="text-sm text-gray-500">
             {totalCorrect} out of {totalQuestions} correct
           </p>
@@ -270,7 +270,7 @@ export function QuizViewer({ sections, courseId, materialId, onComplete }: QuizV
           {activeSection.title}
         </h3>
         <div className="text-center space-y-1">
-          <p className="text-3xl font-bold text-violet-600">{pct}%</p>
+          <p className="text-3xl font-bold text-primary">{pct}%</p>
           <p className="text-sm text-gray-500">
             {sectionScore} out of {questions.length} correct
           </p>
@@ -301,7 +301,7 @@ export function QuizViewer({ sections, courseId, materialId, onComplete }: QuizV
       {/* Section title */}
       {sections.length > 1 && (
         <div className="text-center">
-          <span className="inline-block px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-sm font-medium">
+          <span className="inline-block px-3 py-1 rounded-full bg-primary/20 text-primary text-sm font-medium">
             {activeSection.title} ({activeSectionIndex + 1}/{sections.length})
           </span>
         </div>
@@ -312,13 +312,13 @@ export function QuizViewer({ sections, courseId, materialId, onComplete }: QuizV
         <span>
           Question {currentIndex + 1} of {questions.length}
         </span>
-        <span className="font-medium text-violet-600">
+        <span className="font-medium text-primary">
           Score: {sectionScore}/{currentIndex + (answered ? 1 : 0)}
         </span>
       </div>
       <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-violet-500 rounded-full transition-all duration-300"
+          className="h-full bg-primary/80 rounded-full transition-all duration-300"
           style={{
             width: `${((currentIndex + (answered ? 1 : 0)) / questions.length) * 100}%`,
           }}
@@ -341,7 +341,7 @@ export function QuizViewer({ sections, courseId, materialId, onComplete }: QuizV
 
             if (!answered) {
               buttonClass +=
-                " border-gray-200 hover:border-violet-400 hover:bg-violet-50 cursor-pointer";
+                " border-gray-200 hover:border-primary/60 hover:bg-primary/10 cursor-pointer";
             } else if (isCorrect) {
               buttonClass += " border-green-500 bg-green-50 text-green-700";
             } else if (isSelected && !isCorrect) {

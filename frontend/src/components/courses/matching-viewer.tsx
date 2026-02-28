@@ -75,7 +75,7 @@ export function MatchingViewer({ data, onComplete }: MatchingViewerProps) {
     "bg-sky-100 border-sky-300 text-sky-800",
     "bg-amber-100 border-amber-300 text-amber-800",
     "bg-pink-100 border-pink-300 text-pink-800",
-    "bg-indigo-100 border-indigo-300 text-indigo-800",
+    "bg-primary  border-primary text-primary-foreground",
     "bg-teal-100 border-teal-300 text-teal-800",
     "bg-orange-100 border-orange-300 text-orange-800",
     "bg-purple-100 border-purple-300 text-purple-800",
@@ -135,7 +135,7 @@ export function MatchingViewer({ data, onComplete }: MatchingViewerProps) {
                     isMatched
                       ? getMatchColor(idx)
                       : selectedLeft === idx
-                        ? "bg-violet-50 border-violet-400 text-violet-800 ring-2 ring-violet-200"
+                        ? "bg-primary/10 border-primary/60 text-primary ring-2 ring-primary/30"
                         : "bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50",
                   )}
                 >
@@ -165,7 +165,7 @@ export function MatchingViewer({ data, onComplete }: MatchingViewerProps) {
                       : isWrong
                         ? "bg-red-50 border-red-400 text-red-700 animate-[shake_0.3s_ease-in-out]"
                         : selectedLeft !== null && !isMatched
-                          ? "bg-white border-gray-200 text-gray-700 hover:border-violet-300 hover:bg-violet-50"
+                          ? "bg-white border-gray-200 text-gray-700 hover:border-primary/40 hover:bg-primary/10"
                           : "bg-white border-gray-200 text-gray-700",
                   )}
                 >

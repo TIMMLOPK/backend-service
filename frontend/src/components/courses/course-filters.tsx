@@ -32,7 +32,7 @@ export function CourseFilters({
           placeholder="Search courses..."
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition-all focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition-all"
         />
       </div>
 
@@ -47,7 +47,7 @@ export function CourseFilters({
             className={clsx(
               "rounded-full px-3 py-1 text-xs font-medium transition-all cursor-pointer",
               selectedTopic === null
-                ? "bg-violet-600 text-white"
+                ? "bg-primary text-primary-foreground"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200",
             )}
           >
@@ -62,7 +62,7 @@ export function CourseFilters({
               className={clsx(
                 "rounded-full px-3 py-1 text-xs font-medium transition-all cursor-pointer",
                 selectedTopic === topic
-                  ? "bg-violet-600 text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200",
               )}
             >
@@ -83,7 +83,7 @@ export function CourseFilters({
             className={clsx(
               "rounded-full px-3 py-1 text-xs font-medium transition-all cursor-pointer",
               selectedDifficulty === null
-                ? "bg-violet-600 text-white"
+                ? "bg-primary text-primary-foreground"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200",
             )}
           >
@@ -100,7 +100,7 @@ export function CourseFilters({
               className={clsx(
                 "rounded-full px-3 py-1 text-xs font-medium transition-all cursor-pointer",
                 selectedDifficulty === diff
-                  ? "bg-violet-600 text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200",
               )}
             >

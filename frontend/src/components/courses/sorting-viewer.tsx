@@ -95,7 +95,7 @@ export function SortingViewer({ data, onComplete }: SortingViewerProps) {
   const allCorrect = checked && results.size === totalItems && [...results.values()].every(Boolean);
 
   const categoryColors = [
-    { bg: "bg-violet-50", border: "border-violet-200", header: "bg-violet-100 text-violet-800" },
+    { bg: "bg-primary/20", border: "border-primary/20", header: "bg-primary text-primary-foreground" },
     { bg: "bg-sky-50", border: "border-sky-200", header: "bg-sky-100 text-sky-800" },
     { bg: "bg-amber-50", border: "border-amber-200", header: "bg-amber-100 text-amber-800" },
     { bg: "bg-emerald-50", border: "border-emerald-200", header: "bg-emerald-100 text-emerald-800" },
@@ -104,7 +104,7 @@ export function SortingViewer({ data, onComplete }: SortingViewerProps) {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-2">
-        <Badge bg="bg-indigo-100" text="text-indigo-700">
+        <Badge>
           <FolderTree className="h-3 w-3 mr-1 inline" />
           Sorting
         </Badge>
@@ -116,7 +116,7 @@ export function SortingViewer({ data, onComplete }: SortingViewerProps) {
       </div>
       <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+          className="h-full bg-primary rounded-full transition-all duration-300"
           style={{ width: `${(placedCount / totalItems) * 100}%` }}
         />
       </div>
@@ -148,7 +148,7 @@ export function SortingViewer({ data, onComplete }: SortingViewerProps) {
                     className={clsx(
                       "px-3 py-2 rounded-lg border text-sm transition-all cursor-pointer",
                       selectedItem === item
-                        ? "bg-violet-50 border-violet-400 text-violet-800 ring-2 ring-violet-200"
+                        ? "bg-primary/20 border-primary/20 text-primary-foreground ring-2 ring-primary/20"
                         : "bg-white border-gray-200 text-gray-700 hover:border-gray-300",
                     )}
                   >

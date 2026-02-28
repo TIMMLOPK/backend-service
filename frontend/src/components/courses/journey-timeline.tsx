@@ -54,59 +54,48 @@ export function JourneyTimeline({
         const isRecommended = idx === recommendedStepIndex;
         const isCompleted = step.is_completed;
 
-        // Detect subtopic transitions for visual grouping
         const prevStep = idx > 0 ? steps[idx - 1] : null;
-        const isNewSubtopic =
-          prevStep && prevStep.subtopic_title !== step.subtopic_title;
+        const isNewSubtopic = prevStep && prevStep.subtopic_title !== step.subtopic_title;
 
         return (
           <div key={`${step.material_id}-${step.section_index}-${step.material_type}`}>
-            {isNewSubtopic && (
-              <div className="my-2 border-t border-gray-100" />
-            )}
+            {isNewSubtopic && <div className="my-2 border-t border-border/50" />}
             <button
               onClick={() => onStepClick(idx)}
               className={clsx(
-                "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm transition-all cursor-pointer",
+                "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer",
                 isActive
-                  ? "bg-violet-50 text-violet-700 font-medium"
+                  ? "bg-primary/10 text-primary font-medium"
                   : isCompleted
-                    ? "text-gray-500 hover:bg-gray-50"
-                    : "text-gray-600 hover:bg-gray-50",
+                    ? "text-muted-foreground hover:bg-muted/60"
+                    : "text-foreground/70 hover:bg-muted/60",
               )}
             >
-              {/* Status indicator */}
               <div className="shrink-0">
                 {isCompleted ? (
-                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <CheckCircle className="h-3.5 w-3.5 text-green-500" />
                 ) : isActive || isRecommended ? (
-                  <div className="h-4 w-4 rounded-full border-2 border-violet-500 bg-violet-100 animate-pulse" />
+                  <div className="h-3.5 w-3.5 rounded-full border-2 border-primary/80 bg-primary/20 animate-pulse" />
                 ) : (
-                  <Circle className="h-4 w-4 text-gray-300" />
+                  <Circle className="h-3.5 w-3.5 text-muted-foreground/40" />
                 )}
               </div>
 
-              {/* Icon */}
               <Icon
                 className={clsx(
-                  "h-3.5 w-3.5 shrink-0",
-                  isActive
-                    ? "text-violet-600"
-                    : isCompleted
-                      ? "text-gray-400"
-                      : "text-gray-400",
+                  "h-3 w-3 shrink-0",
+                  isActive ? "text-primary" : "text-muted-foreground/60",
                 )}
               />
 
-              {/* Label */}
               <div className="min-w-0 flex-1">
-                <div className="truncate text-xs">
+                <div className="truncate text-[11px] font-medium leading-tight">
                   {MATERIAL_TYPE_LABELS[step.material_type]}
                 </div>
                 <div
                   className={clsx(
-                    "truncate text-xs",
-                    isActive ? "text-violet-500" : "text-gray-400",
+                    "truncate text-[10px] leading-tight mt-0.5",
+                    isActive ? "text-primary/80" : "text-muted-foreground/70",
                   )}
                 >
                   {step.subtopic_title}
@@ -143,11 +132,11 @@ export function JourneyProgressBar({
         <span className="text-gray-500">
           {completedSteps}/{totalSteps} steps
         </span>
-        <span className="font-medium text-violet-600">{pct}%</span>
+        <span className="font-medium text-primary">{pct}%</span>
       </div>
       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-violet-500 rounded-full transition-all duration-500"
+          className="h-full bg-primary/80 rounded-full transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -163,7 +152,7 @@ export function JourneyProgressBar({
               className={clsx(
                 "shrink-0 h-1.5 rounded-full transition-all cursor-pointer",
                 isActive
-                  ? "w-6 bg-violet-500"
+                  ? "w-6 bg-primary/80"
                   : step.is_completed
                     ? "w-2 bg-green-400"
                     : "w-2 bg-gray-200",

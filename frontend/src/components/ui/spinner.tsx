@@ -15,7 +15,7 @@ const sizeStyles = {
 export function Spinner({ size = "md", className }: SpinnerProps) {
   return (
     <Loader2
-      className={clsx("animate-spin text-violet-600", sizeStyles[size], className)}
+      className={clsx("animate-spin text-primary", sizeStyles[size], className)}
     />
   );
 }

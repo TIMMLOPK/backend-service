@@ -9,7 +9,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { api, ApiError, getErrorMessage } from "@/lib/api";
 import type { TrackSuggestion, WeakArea, CourseMaterial } from "@/lib/types";
 
@@ -109,14 +108,16 @@ export function SpecialisationPanel({
   };
 
   return (
-    <Card className="p-6 space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-        <Sparkles className="h-5 w-5 text-violet-600" />
-        Specialisation
-      </h3>
-      <p className="text-sm text-gray-500">
-        You&apos;ve made great progress! Explore specialisation options below.
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-base font-semibold flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          Specialisation
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          You&apos;ve made great progress! Explore specialisation options below.
+        </p>
+      </div>
 
       {error && (
         <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">
@@ -127,8 +128,8 @@ export function SpecialisationPanel({
       {/* Learning Tracks */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-            <Target className="h-4 w-4 text-violet-500" />
+          <h4 className="text-sm font-semibold flex items-center gap-1.5">
+            <Target className="h-4 w-4 text-primary/80" />
             Learning Tracks
           </h4>
           {!tracks && (
@@ -162,7 +163,7 @@ export function SpecialisationPanel({
                   {track.subtopics.map((s) => (
                     <span
                       key={s}
-                      className="rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-600"
+                      className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
                     >
                       {s}
                     </span>
@@ -189,7 +190,7 @@ export function SpecialisationPanel({
         )}
 
         {tracks && tracks.length === 0 && (
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             No track suggestions available.
           </p>
         )}
@@ -198,7 +199,7 @@ export function SpecialisationPanel({
       {/* Weak Areas */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+          <h4 className="text-sm font-semibold flex items-center gap-1.5">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             Strengthen Weak Areas
           </h4>
@@ -256,6 +257,6 @@ export function SpecialisationPanel({
           </p>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

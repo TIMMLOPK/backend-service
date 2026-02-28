@@ -60,7 +60,7 @@ export function FlashcardViewer({ sections, onComplete }: FlashcardViewerProps) 
               className={clsx(
                 "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
                 activeSectionIndex === idx
-                  ? "bg-violet-600 text-white shadow-sm"
+                  ? "bg-primary text-white shadow-sm"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200",
               )}
             >
@@ -76,7 +76,7 @@ export function FlashcardViewer({ sections, onComplete }: FlashcardViewerProps) 
       </div>
       <div className="w-full max-w-md h-1 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-violet-500 rounded-full transition-all duration-300"
+          className="h-full bg-primary/80 rounded-full transition-all duration-300"
           style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}
         />
       </div>
@@ -101,7 +101,7 @@ export function FlashcardViewer({ sections, onComplete }: FlashcardViewerProps) 
             className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-white border border-gray-200 shadow-sm p-8 text-center"
             style={{ backfaceVisibility: "hidden" }}
           >
-            <p className="text-xs uppercase tracking-wider text-violet-500 font-semibold mb-3">
+            <p className="text-xs uppercase tracking-wider text-primary/80 font-semibold mb-3">
               Question
             </p>
             <p className="text-lg font-medium text-gray-900">{card.question}</p>
@@ -110,13 +110,13 @@ export function FlashcardViewer({ sections, onComplete }: FlashcardViewerProps) 
 
           {/* Back */}
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-violet-50 border border-violet-200 shadow-sm p-8 text-center"
+            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-primary/10 border border-primary/30 shadow-sm p-8 text-center"
             style={{
               backfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
             }}
           >
-            <p className="text-xs uppercase tracking-wider text-violet-500 font-semibold mb-3">
+            <p className="text-xs uppercase tracking-wider text-primary/80 font-semibold mb-3">
               Answer
             </p>
             <p className="text-lg font-medium text-gray-900">{card.answer}</p>

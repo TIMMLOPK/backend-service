@@ -2,7 +2,37 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
 import { clsx } from "clsx";
+
+const MARKDOWN_COMPONENTS: Components = {
+  h1: ({ children }) => <h1 className="text-2xl font-bold text-gray-900 mt-6 mb-3">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-xl font-semibold text-gray-900 mt-5 mb-2">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">{children}</h3>,
+  h4: ({ children }) => <h4 className="text-base font-semibold text-gray-900 mt-3 mb-1">{children}</h4>,
+  p: ({ children }) => <p className="text-gray-700 leading-relaxed">{children}</p>,
+  strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  ul: ({ children }) => <ul className="list-disc pl-5 space-y-1 text-gray-700">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1 text-gray-700">{children}</ol>,
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-teal-400 pl-4 italic text-gray-600 my-2">{children}</blockquote>
+  ),
+  code: ({ children, className }) => {
+    const isBlock = className?.startsWith("language-");
+    return isBlock ? (
+      <code className="block bg-gray-900 text-gray-100 rounded-lg p-4 text-sm font-mono overflow-x-auto">{children}</code>
+    ) : (
+      <code className="bg-gray-100 text-teal-700 px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
+    );
+  },
+  pre: ({ children }) => <pre className="my-2 overflow-x-auto">{children}</pre>,
+  hr: () => <hr className="border-gray-200 my-4" />,
+  a: ({ href, children }) => (
+    <a href={href} className="text-teal-700 underline underline-offset-2 hover:text-teal-600" target="_blank" rel="noopener noreferrer">{children}</a>
+  ),
+};
 import { FileText, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,8 +79,8 @@ export function CaseStudyViewer({
 
       {/* Scenario */}
       <div className="bg-white rounded-2xl border border-gray-200 p-8">
-        <div className="prose prose-violet max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900 prose-li:text-gray-700">
-          <ReactMarkdown>{data.scenario}</ReactMarkdown>
+        <div className="space-y-4 text-gray-700 leading-relaxed">
+          <ReactMarkdown components={MARKDOWN_COMPONENTS}>{data.scenario}</ReactMarkdown>
         </div>
       </div>
 
