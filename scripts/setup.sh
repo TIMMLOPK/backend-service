@@ -51,17 +51,17 @@ APP_ENV="$ROOT/configuration/app.env"
 # JWT secret – generate a random one if blank
 if grep -q '^JWT_SECRET_KEY=$' "$APP_ENV" 2>/dev/null; then
   secret=$(openssl rand -hex 32 2>/dev/null || head -c 64 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 64)
-  sed -i.bak "s|^JWT_SECRET_KEY=$|JWT_SECRET_KEY=${secret}|" "$APP_ENV" && rm -f "$APP_ENV.bak"
+  sed -i "s|^JWT_SECRET_KEY=$|JWT_SECRET_KEY=${secret}|" "$APP_ENV"
   log "Generated random JWT_SECRET_KEY"
 fi
 
 MONGO_ENV="$ROOT/configuration/mongodb.env"
 if grep -q '^MONGO_INITDB_ROOT_USERNAME=$' "$MONGO_ENV" 2>/dev/null; then
-  sed -i.bak \
+  sed -i \
     -e 's|^MONGO_INITDB_ROOT_USERNAME=$|MONGO_INITDB_ROOT_USERNAME=hacktheeast|' \
     -e 's|^MONGO_INITDB_ROOT_PASSWORD=$|MONGO_INITDB_ROOT_PASSWORD=hacktheeast|' \
     -e 's|^MONGO_INITDB_DATABASE=$|MONGO_INITDB_DATABASE=hacktheeast|' \
-    "$MONGO_ENV" && rm -f "$MONGO_ENV.bak"
+    "$MONGO_ENV"
   log "Set default MongoDB credentials (hacktheeast/hacktheeast)"
 fi
 
@@ -81,4 +81,4 @@ else
 fi
 
 echo ""
-log "Setup complete! Run: make build && make run"
+log "Setup complete!"
