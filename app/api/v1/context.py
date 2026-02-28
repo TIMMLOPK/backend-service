@@ -10,6 +10,7 @@
 # that define FastAPI dependencies. All other files in this codebase use it.
 # =============================================================================
 
+from collections.abc import Callable
 from typing import Annotated
 from typing import override
 
@@ -26,6 +27,7 @@ from app.adapters.mongodb import MongoDBClientAdapter
 from app.adapters.redis import RedisClient
 from app.resources import UserModel
 from app.resources import UserRepository
+from app.resources import UserType
 from app.services import AbstractAuthContext
 from app.services import AbstractContext
 from app.utilities import tokens
@@ -105,8 +107,43 @@ def _get_auth_context(
     return HTTPAuthContext(request, user)
 
 
+def _require_user_type(
+    *allowed: UserType,
+) -> Callable[..., HTTPAuthContext]:
+    def dependency(
+        request: Request,
+        user: UserModel = Depends(_get_authenticated_user),
+    ) -> HTTPAuthContext:
+        if user.type not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+        return HTTPAuthContext(request, user)
+
+    return dependency
+
+
 RequiresContext = Annotated[HTTPContext, Depends(HTTPContext)]
 """A type alias for read-only operations using the client."""
 
 RequiresAuth = Annotated[HTTPAuthContext, Depends(_get_auth_context)]
-"""A type alias for authenticated operations."""
+"""A type alias for authenticated operations (any user type)."""
+
+RequiresStudentAuth = Annotated[
+    HTTPAuthContext,
+    Depends(_require_user_type(UserType.STUDENT, UserType.SUPERVISED_STUDENT)),
+]
+"""A type alias for operations requiring a student or supervised student."""
+
+RequiresParentAuth = Annotated[
+    HTTPAuthContext,
+    Depends(_require_user_type(UserType.PARENT)),
+]
+"""A type alias for operations requiring a parent account."""
+
+RequiresAdminAuth = Annotated[
+    HTTPAuthContext,
+    Depends(_require_user_type(UserType.ADMIN)),
+]
+"""A type alias for operations requiring an admin account."""

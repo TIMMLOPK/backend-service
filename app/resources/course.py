@@ -7,10 +7,17 @@ from typing import Literal
 from pydantic import BaseModel
 
 
+class CourseType(StrEnum):
+    ACADEMIC = "academic"
+    HOBBY = "hobby"
+    JOB = "job"
+
+
 # Actual course data itself.
 class CourseModel(BaseModel):
     id: str
     name: str
+    type: CourseType
     preview_url: str | None
     created_at: datetime
 
@@ -27,28 +34,3 @@ class CourseAssignModel(BaseModel):
     user_id: str
     relationship: CourseAssignRelationship
     created_at: datetime
-
-
-class BasisMaterialType(StrEnum):
-    SLIDES = "slides"
-    NOTES = "notes"
-
-
-class CourseBasisMaterialModel(BaseModel):
-    id: str
-    course_id: str
-    title: str
-    summary: str
-    description: str
-    is_ai_generated: bool
-    type: BasisMaterialType
-    url: str
-    created_at: datetime
-
-
-type ResourceCreatedBy = Literal["user", "ai"]
-
-
-class CourseResourceModel(BaseModel):
-    id: str
-    course_id: str

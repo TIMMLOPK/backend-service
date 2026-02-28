@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from fastapi import status
 
+from app.resources import SupervisionDetailsModel
 from app.resources import UserModel
+from app.resources import UserType
+from app.services._common import AbstractAuthContext
 from app.services._common import AbstractContext
 from app.services._common import ServiceError
 from app.utilities import hashing
@@ -33,6 +36,7 @@ async def register(
     full_name: str,
     email: str,
     password: str,
+    user_type: UserType = UserType.STUDENT,
 ) -> AuthError.OnSuccess[UserModel]:
     existing_user = await ctx.users.find_by_username(username)
     if existing_user is not None:
@@ -48,16 +52,44 @@ async def register(
         full_name=full_name,
         email=email,
         password=hashed_password,
+        user_type=user_type,
+    )
+    return user
+
+
+async def create_supervised_student(
+    ctx: AbstractAuthContext,
+    username: str,
+    full_name: str,
+    email: str,
+    password: str,
+) -> AuthError.OnSuccess[UserModel]:
+    existing_user = await ctx.users.find_by_username(username)
+    if existing_user is not None:
+        return AuthError.USERNAME_TAKEN
+
+    existing_email = await ctx.users.find_by_email(email)
+    if existing_email is not None:
+        return AuthError.EMAIL_TAKEN
+
+    hashed_password = await hashing.hash_password(password)
+    user = await ctx.users.create(
+        username=username,
+        full_name=full_name,
+        email=email,
+        password=hashed_password,
+        user_type=UserType.SUPERVISED_STUDENT,
+        supervision_details=SupervisionDetailsModel(parent_id=ctx.user.id),
     )
     return user
 
 
 async def login(
     ctx: AbstractContext,
-    username: str,
+    email: str,
     password: str,
 ) -> AuthError.OnSuccess[str]:
-    user = await ctx.users.find_by_username(username)
+    user = await ctx.users.find_by_email(email)
     if user is None:
         return AuthError.INVALID_CREDENTIALS
 
