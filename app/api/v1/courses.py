@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from app.api.v1 import response
 from app.api.v1.context import RequiresAuth
+from app.api.v1.context import RequiresStudentAuth
 from app.resources.course import CourseDifficulty
 from app.resources.course import CourseGenerationStatus
 from app.resources.course import CourseMaterialType
@@ -19,6 +20,7 @@ from app.resources.course import CourseType
 from app.resources.course import MaterialSectionModel
 from app.resources.quiz_scores import QuizAnswerRecordModel
 from app.services import courses
+from app.services import is_error
 
 router = APIRouter(
     prefix="/courses",
@@ -233,16 +235,16 @@ async def course_generation_events(
 ) -> StreamingResponse:
     async def event_stream():
         while True:
-            course = await ctx.courses.find_by_id(course_id)
-            if course is None:
-                data = json.dumps({"type": "error", "message": "not_found"})
+            result = await courses.get_course(ctx, course_id)
+            if is_error(result):
+                data = json.dumps({"type": "error", "message": result.value})
                 yield f"data: {data}\n\n"
                 return
 
-            data = json.dumps({"type": "status", "status": course.status.value})
+            data = json.dumps({"type": "status", "status": result.status.value})
             yield f"data: {data}\n\n"
 
-            if course.status is not CourseGenerationStatus.GENERATING:
+            if result.status is not CourseGenerationStatus.GENERATING:
                 return
 
             await asyncio.sleep(3)
@@ -265,6 +267,27 @@ async def list_courses(
     result = await courses.get_user_courses(ctx)
     course_list = response.unwrap(result)
     return response.create([_course_response(c) for c in course_list])
+
+
+@router.get("/explore", response_model=CourseListWrapped)
+async def explore_courses(
+    ctx: RequiresAuth,
+    limit: int = 40,
+    offset: int = 0,
+) -> Response:
+    result = await courses.get_public_courses(ctx, limit=limit, offset=offset)
+    course_list = response.unwrap(result)
+    return response.create([_course_response(c) for c in course_list])
+
+
+@router.post("/{course_id}/enrol", response_model=CourseWrapped)
+async def enrol_in_course(
+    ctx: RequiresStudentAuth,
+    course_id: str,
+) -> Response:
+    result = await courses.enrol_in_course(ctx, course_id)
+    course = response.unwrap(result)
+    return response.create(_course_response(course), status=201)
 
 
 @router.get("/{course_id}", response_model=CourseWrapped)
@@ -447,3 +470,45 @@ async def generate_weak_practice(
     result = await courses.generate_weak_area_practice(ctx, course_id, body.subtopic_title)
     materials = response.unwrap(result)
     return response.create([_material_response(m) for m in materials])
+
+
+class ImprovementStatusResponse(BaseModel):
+    is_improving: bool
+
+
+type ImprovementStatusWrapped = response.BaseResponse[ImprovementStatusResponse]
+
+
+@router.get("/{course_id}/improvement-status", response_model=ImprovementStatusWrapped)
+async def get_improvement_status(
+    ctx: RequiresAuth,
+    course_id: str,
+) -> Response:
+    status = await courses.get_improvement_status(ctx, course_id)
+    return response.create(ImprovementStatusResponse(is_improving=status["is_improving"]))
+
+
+class TrackActivityRequest(BaseModel):
+    material_id: str
+    section_index: int
+    material_type: str
+    time_spent_seconds: int
+    was_completed: bool
+
+
+@router.post("/{course_id}/activity")
+async def track_activity(
+    ctx: RequiresAuth,
+    course_id: str,
+    body: TrackActivityRequest,
+) -> Response:
+    result = await courses.track_activity(
+        ctx,
+        course_id,
+        body.material_id,
+        body.section_index,
+        body.material_type,
+        body.time_spent_seconds,
+        was_completed=body.was_completed,
+    )
+    return response.create(result)

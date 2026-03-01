@@ -1,6 +1,6 @@
 "use client";
 
-import { IconUser, IconMail, IconAt, IconShield, IconUsers, IconBook, IconCheck } from "@tabler/icons-react";
+import { IconUser, IconMail, IconAt, IconShield, IconUsers, IconBook, IconLogout } from "@tabler/icons-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useDashboard } from "@/lib/hooks/use-dashboard";
 import { Card } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { USER_TYPE_LABELS } from "@/lib/constants";
 import Link from "next/link";
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { stats } = useDashboard();
 
   if (!user) return null;
@@ -188,6 +188,21 @@ export default function ProfilePage() {
             </Link>
           </Card>
         )}
+      {/* Sign out */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold">Sign Out</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Sign out of your account on this device
+            </p>
+          </div>
+          <Button variant="destructive" size="sm" onClick={logout}>
+            <IconLogout className="size-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 }

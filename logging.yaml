@@ -22,7 +22,7 @@ handlers:
 formatters:
   json:
     class: pythonjsonlogger.jsonlogger.JsonFormatter
-    format: '%(asctime)s %(name)s %(levelname)s %(message)s'
+    format: '%(asctime)s %(name)s %(levelname)s %(message)s %(exc_info)s'
 root:
   level: INFO
   handlers: [console]

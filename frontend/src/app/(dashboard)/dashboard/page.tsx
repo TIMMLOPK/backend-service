@@ -87,6 +87,8 @@ export default function DashboardPage() {
   const [c0, c1, c2, c3] = recentCourses;
   const count = recentCourses.length;
 
+  const isParent = user?.user_type === "parent";
+
   const createButton = (
     <CreateCourseDialog
       trigger={
@@ -95,7 +97,9 @@ export default function DashboardPage() {
           className="rounded-full px-3 sm:px-4 gap-2 shadow-2xl text-sm sm:text-base shrink-0 mx-1 sm:mx-2"
         >
           <IconPlus className="size-4 shrink-0" />
-          <span className="hidden sm:inline">Learn something new</span>
+          <span className="hidden sm:inline">
+            {isParent ? "Create a course for your children" : "Learn something new"}
+          </span>
         </Button>
       }
     />

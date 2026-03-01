@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,6 +14,7 @@ import {
   IconChevronDown,
   IconBrain,
   IconAlertTriangle,
+  IconWand,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { FullPageSpinner } from "@/components/ui/spinner";
@@ -21,6 +22,8 @@ import { JourneyTimeline } from "@/components/courses/journey-timeline";
 import { StepContent } from "@/components/courses/step-content";
 import { SpecialisationPanel } from "@/components/courses/specialisation-panel";
 import { useJourney } from "@/lib/hooks/use-journey";
+import { api } from "@/lib/api";
+import type { JourneyStep } from "@/lib/types";
 import { TOPIC_GRADIENTS, TOPIC_LABELS, DIFFICULTY_LABELS, DIFFICULTY_COLORS, MATERIAL_TYPE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +51,66 @@ export default function CourseViewPage() {
     extending,
     handleExtend,
   } = useJourney(courseId);
+
+  const [isImproving, setIsImproving] = useState(false);
+  const wasImprovingRef = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+    const poll = async () => {
+      try {
+        const result = await api<{ is_improving: boolean }>(
+          `/api/v1/courses/${courseId}/improvement-status`,
+        );
+        if (!active) return;
+        const improving = result.is_improving;
+        setIsImproving(improving);
+        if (wasImprovingRef.current && !improving) {
+          refreshJourney();
+        }
+        wasImprovingRef.current = improving;
+      } catch {
+        // silently ignore polling errors
+      }
+    };
+
+    poll();
+    const interval = setInterval(poll, 4000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [courseId, refreshJourney]);
+
+  // Track how long the user spends on each step and fire an activity event
+  // when they navigate away, so the backend can detect low engagement.
+  const stepEntryTimeRef = useRef<number>(Date.now());
+  const prevStepRef = useRef<JourneyStep | null>(null);
+
+  useEffect(() => {
+    const prevStep = prevStepRef.current;
+    if (prevStep && journey) {
+      const timeSpent = Math.round((Date.now() - stepEntryTimeRef.current) / 1000);
+      const currentState = journey.steps.find(
+        (s) => s.material_id === prevStep.material_id && s.section_index === prevStep.section_index,
+      );
+      const wasCompleted = currentState?.is_completed ?? false;
+      api(`/api/v1/courses/${courseId}/activity`, {
+        method: "POST",
+        body: JSON.stringify({
+          material_id: prevStep.material_id,
+          section_index: prevStep.section_index,
+          material_type: prevStep.material_type,
+          time_spent_seconds: timeSpent,
+          was_completed: wasCompleted,
+        }),
+      }).catch(() => {});
+    }
+    stepEntryTimeRef.current = Date.now();
+    prevStepRef.current = currentStep;
+    // Only fire when the user actually navigates; read journey/currentStep from closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStepIndex]);
 
   if (loading) return <FullPageSpinner />;
   if (!course) {
@@ -193,6 +256,23 @@ export default function CourseViewPage() {
               The lecture content is still available. You can try extending the course to regenerate materials.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* ── AI improvement banner ── */}
+      {isImproving && (
+        <div className="flex items-center gap-3 rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3 text-sm">
+          <div className="relative shrink-0">
+            <IconWand className="size-5 text-violet-500" />
+            <span className="absolute -inset-1 rounded-full border border-violet-500/30 border-t-violet-500 animate-spin" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-foreground">AI is trying to improve the content based on your activity</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              New practice materials are being generated for topics you found challenging.
+            </p>
+          </div>
+          <IconLoader2 className="size-4 text-violet-500 animate-spin shrink-0" />
         </div>
       )}
 

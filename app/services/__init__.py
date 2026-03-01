@@ -4,6 +4,7 @@ from . import auth
 from . import courses
 from . import dashboard
 from . import health
+from . import parent
 from ._common import AbstractAuthContext
 from ._common import AbstractContext
 from ._common import ServiceError

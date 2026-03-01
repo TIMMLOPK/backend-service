@@ -32,6 +32,22 @@ const MARKDOWN_COMPONENTS: Components = {
   a: ({ href, children }) => (
     <a href={href} className="text-teal-700 underline underline-offset-2 hover:text-teal-600" target="_blank" rel="noopener noreferrer">{children}</a>
   ),
+  table: ({ children }) => (
+    <div className="my-4 w-full overflow-x-auto rounded-xl border border-gray-200">
+      <table className="w-full border-collapse text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-gray-50">{children}</thead>,
+  tbody: ({ children }) => <tbody className="divide-y divide-gray-100">{children}</tbody>,
+  tr: ({ children }) => <tr className="even:bg-gray-50/60 transition-colors">{children}</tr>,
+  th: ({ children }) => (
+    <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="px-4 py-2.5 text-gray-700 align-top">{children}</td>
+  ),
 };
 import { FileText, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";

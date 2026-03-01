@@ -1,28 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Users } from "lucide-react";
+import { IconLoader2 } from "@tabler/icons-react";
 import { useAuthStore } from "@/stores/auth-store";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ChildCard } from "@/components/children/child-card";
 import { AddChildModal } from "@/components/children/add-child-modal";
 import { ROUTES } from "@/lib/constants";
+import type { ChildOverview } from "@/lib/types";
 
 export default function ChildrenPage() {
   const { user } = useAuthStore();
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
+  const [children, setChildren] = useState<ChildOverview[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Redirect non-parents
-  if (user && user.user_type !== "parent") {
-    router.replace(ROUTES.DASHBOARD);
-    return null;
-  }
+  useEffect(() => {
+    if (user && user.user_type !== "parent") {
+      router.replace(ROUTES.DASHBOARD);
+    }
+  }, [user, router]);
+
+  const fetchChildren = async () => {
+    try {
+      const data = await api<ChildOverview[]>("/api/v1/parent/children");
+      setChildren(data);
+    } catch {
+      // silently ignore
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.user_type === "parent") {
+      fetchChildren();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   if (!user) return null;
-
-  const dependants = user.dependants || [];
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -30,16 +51,24 @@ export default function ChildrenPage() {
         <div>
           <h2 className="text-xl font-bold text-gray-900">My Children</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Manage your children&apos;s supervised accounts
+            Monitor your children&apos;s learning progress
           </p>
         </div>
-        <Button onClick={() => setModalOpen(true)} size="md">
+        <Button
+          onClick={() => setModalOpen(true)}
+          size="md"
+          disabled={loading}
+        >
           <Plus className="h-4 w-4" />
           Add Child
         </Button>
       </div>
 
-      {dependants.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <IconLoader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : children.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20 mb-4">
             <Users className="h-8 w-8" />
@@ -58,7 +87,7 @@ export default function ChildrenPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {dependants.map((child) => (
+          {children.map((child) => (
             <ChildCard key={child.id} child={child} />
           ))}
         </div>
@@ -66,7 +95,10 @@ export default function ChildrenPage() {
 
       <AddChildModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          fetchChildren();
+        }}
       />
     </div>
   );

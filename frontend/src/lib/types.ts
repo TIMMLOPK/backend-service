@@ -302,6 +302,37 @@ export interface JourneyView {
   recommended_step_index: number | null;
 }
 
+// Parent / child monitoring types
+export interface ChildOverview {
+  id: string;
+  username: string;
+  full_name: string;
+  email: string;
+  course_count: number;
+  total_sections: number;
+  completed_sections: number;
+  completion_pct: number;
+}
+
+export interface ChildCourse extends Course {
+  total_sections: number;
+  completed_sections: number;
+  completion_pct: number;
+}
+
+export interface ChildSummary {
+  child: {
+    id: string;
+    username: string;
+    full_name: string;
+    email: string;
+  };
+  total_sections: number;
+  completed_sections: number;
+  courses_with_progress: CourseProgress[];
+  best_quiz_percentage: number | null;
+}
+
 // Specialisation types
 export interface TrackSuggestion {
   title: string;

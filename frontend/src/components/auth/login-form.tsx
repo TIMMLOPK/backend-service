@@ -53,32 +53,7 @@ export function LoginForm() {
       </div>
 
       <Card className="p-0">
-        <CardHeader className="px-6 pt-6 pb-4">
-          <CardTitle className="text-base">Sign in with</CardTitle>
-        </CardHeader>
-        <CardContent className="px-6 pb-0 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" type="button" className="w-full">
-              <IconBrandGoogle className="size-4" />
-              Google
-            </Button>
-            <Button variant="outline" type="button" className="w-full">
-              <IconBrandGithub className="size-4" />
-              GitHub
-            </Button>
-          </div>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                or continue with email
-              </span>
-            </div>
-          </div>
-
+        <CardContent className="px-6 pt-8 space-y-3">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>

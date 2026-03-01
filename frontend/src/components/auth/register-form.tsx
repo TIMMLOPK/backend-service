@@ -114,28 +114,6 @@ export function RegisterForm() {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" type="button" className="w-full">
-              <IconBrandGoogle className="size-4" />
-              Google
-            </Button>
-            <Button variant="outline" type="button" className="w-full">
-              <IconBrandGithub className="size-4" />
-              GitHub
-            </Button>
-          </div>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                or sign up with email
-              </span>
-            </div>
-          </div>
-
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <form onSubmit={handleSubmit} className="space-y-3 pb-2">

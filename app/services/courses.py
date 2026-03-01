@@ -1024,10 +1024,12 @@ async def generate_course(
 
     elapsed = round(_time.monotonic() - t0, 2)
     usage = completion.usage
+    choice = completion.choices[0] if completion.choices else None
     logger.info(
         "Phase 1 LLM call completed",
         extra={
             "elapsed_s": elapsed,
+            "finish_reason": choice.finish_reason if choice else "no_choice",
             "prompt_tokens": usage.prompt_tokens if usage else None,
             "completion_tokens": usage.completion_tokens if usage else None,
             "total_tokens": usage.total_tokens if usage else None,
@@ -1036,14 +1038,35 @@ async def generate_course(
 
     data = _extract_tool_args(completion)
     if data is None:
-        logger.error("Phase 1 LLM returned no tool call")
+        logger.error(
+            "Phase 1 LLM returned no tool call",
+            extra={
+                "finish_reason": choice.finish_reason if choice else "unknown",
+                "message_content_preview": (
+                    (choice.message.content or "")[:200] if choice else ""
+                ),
+            },
+        )
         return CourseError.GENERATION_FAILED
 
     subtopics: list[str] = data.get("subtopics", [])
+    missing_keys = [k for k in ("name", "description", "lecture") if not data.get(k)]
     logger.info(
         "Phase 1 parsed successfully",
-        extra={"subtopic_count": len(subtopics), "subtopics": subtopics},
+        extra={
+            "subtopic_count": len(subtopics),
+            "subtopics": subtopics,
+            "data_keys": list(data.keys()),
+            "missing_required_keys": missing_keys,
+        },
     )
+
+    if missing_keys:
+        logger.error(
+            "Phase 1 response missing required fields",
+            extra={"missing_keys": missing_keys, "data_keys": list(data.keys())},
+        )
+        return CourseError.INVALID_AI_RESPONSE
 
     # Create the course with status=GENERATING; Phase 2 will update it to READY/FAILED.
     course_topic = _map_topic(topic)
@@ -1241,6 +1264,13 @@ async def submit_quiz_score(
 
     # Mark section completed
     await ctx.course_materials.mark_section_completed(material_id, section_index)
+
+    score_pct = score / total if total > 0 else 1.0
+    if score_pct < _IMPROVEMENT_SCORE_THRESHOLD and section_index < len(material.data):
+        subtopic_title = material.data[section_index].title
+        asyncio.create_task(
+            _auto_improve_content(ctx, course_id, ctx.user.id, subtopic_title)
+        )
 
     return {"id": record.id, "score": score, "total": total}
 
@@ -1665,16 +1695,109 @@ async def generate_weak_area_practice(
     return await extend_course(ctx, course_id, prompt)
 
 
+async def get_improvement_status(
+    ctx: AbstractAuthContext,
+    course_id: str,
+) -> dict:
+    improvement_key = f"{course_id}:{ctx.user.id}"
+    return {"is_improving": improvement_key in _improving}
+
+
+async def track_activity(
+    ctx: AbstractAuthContext,
+    course_id: str,
+    material_id: str,
+    section_index: int,
+    material_type: str,
+    time_spent_seconds: int,
+    *,
+    was_completed: bool,
+) -> dict:
+    material = await ctx.course_materials.find_by_id(material_id)
+    if material is None or section_index >= len(material.data):
+        return {"tracked": False}
+
+    subtopic_title = material.data[section_index].title
+
+    hard_skip = not was_completed and time_spent_seconds < _MIN_ENGAGE_SECONDS
+    low_engagement_complete = (
+        material_type in _LOW_ENGAGEMENT_MATERIAL_TYPES
+        and was_completed
+        and time_spent_seconds < _MIN_LECTURE_READ_SECONDS
+    )
+
+    if hard_skip or low_engagement_complete:
+        logger.info(
+            "Low-engagement activity detected, triggering improvement",
+            extra={
+                "course_id": course_id,
+                "material_type": material_type,
+                "time_spent_seconds": time_spent_seconds,
+                "was_completed": was_completed,
+                "subtopic_title": subtopic_title,
+            },
+        )
+        asyncio.create_task(
+            _auto_improve_content(ctx, course_id, ctx.user.id, subtopic_title)
+        )
+        return {"tracked": True, "improvement_triggered": True}
+
+    return {"tracked": True, "improvement_triggered": False}
+
+
 # ---------------------------------------------------------------------------
 # Lazy generation
 # ---------------------------------------------------------------------------
 
 _IMPROVEMENT_SCORE_THRESHOLD = 0.6
+_MIN_ENGAGE_SECONDS = 10
+_MIN_LECTURE_READ_SECONDS = 30
+_LOW_ENGAGEMENT_MATERIAL_TYPES = {"lecture", "spotlight"}
+_IMPROVEMENT_COOLDOWN_SECONDS = 300
+_MAX_SUBTOPICS = 20  # Cap lazy generation; courses beyond this are already comprehensive
 
-# Simple in-memory sets to prevent duplicate generation requests.
+# Simple in-memory state to prevent duplicate/spammy generation requests.
 # In production these would be Redis keys, but for the hackathon this suffices.
 _generating_ahead: set[str] = set()
 _improving: set[str] = set()
+_last_improved: dict[str, float] = {}
+
+
+async def _auto_improve_content(
+    ctx: AbstractAuthContext,
+    course_id: str,
+    user_id: str,
+    subtopic_title: str,
+) -> None:
+    improvement_key = f"{course_id}:{user_id}"
+    if improvement_key in _improving:
+        return
+    last_run = _last_improved.get(improvement_key, 0.0)
+    if _time.time() - last_run < _IMPROVEMENT_COOLDOWN_SECONDS:
+        logger.debug(
+            "Skipping improvement — cooldown active",
+            extra={"course_id": course_id, "user_id": user_id},
+        )
+        return
+    _improving.add(improvement_key)
+    try:
+        logger.info(
+            "Auto-improving content for weak subtopic",
+            extra={"course_id": course_id, "subtopic_title": subtopic_title},
+        )
+        await generate_weak_area_practice(ctx, course_id, subtopic_title)
+        logger.info(
+            "Auto-improvement completed",
+            extra={"course_id": course_id, "subtopic_title": subtopic_title},
+        )
+    except Exception:
+        logger.exception(
+            "Auto-improvement failed",
+            extra={"course_id": course_id, "subtopic_title": subtopic_title},
+        )
+    finally:
+        _improving.discard(improvement_key)
+        _last_improved[improvement_key] = _time.time()
 
 
 async def _check_and_generate_ahead(
@@ -1696,6 +1819,14 @@ async def _check_and_generate_ahead(
             if section.is_completed:
                 started_subtopics.add(section.title)
 
+    total_subtopics = len(all_subtopics)
+    if total_subtopics >= _MAX_SUBTOPICS:
+        logger.debug(
+            "Skipping lazy generation — subtopic cap reached",
+            extra={"course_id": course_id, "total_subtopics": total_subtopics, "cap": _MAX_SUBTOPICS},
+        )
+        return
+
     unstarted = len(all_subtopics - started_subtopics)
     if unstarted > 2:
         return  # Plenty of content remaining
@@ -1703,11 +1834,13 @@ async def _check_and_generate_ahead(
     _generating_ahead.add(course_id)
     try:
         existing_titles = list(all_subtopics)
+        remaining_budget = _MAX_SUBTOPICS - total_subtopics
+        suggest_count = min(5, max(1, remaining_budget))
         subtopics_user_msg = (
             f"Course topic: {course.name}\n"
             f"Difficulty: {course.difficulty}\n"
             f"Existing subtopics: {json.dumps(existing_titles)}\n\n"
-            f"Suggest 3-5 NEW subtopics that continue this course."
+            f"Suggest exactly {suggest_count} NEW subtopic(s) that continue this course."
         )
 
         try:
@@ -1779,3 +1912,70 @@ async def _check_and_generate_ahead(
         logger.exception("Lazy generation failed", extra={"course_id": course_id})
     finally:
         _generating_ahead.discard(course_id)
+
+
+async def get_public_courses(
+    ctx: AbstractAuthContext,
+    *,
+    limit: int = 40,
+    offset: int = 0,
+) -> CourseError.OnSuccess[list[CourseModel]]:
+    all_public = await ctx.courses.find_public(limit=limit, offset=offset)
+    user_assigns = await ctx.course_assigns.find_by_user_id(ctx.user.id)
+    enrolled_ids = {a.course_id for a in user_assigns}
+    return [c for c in all_public if c.id not in enrolled_ids]
+
+
+async def enrol_in_course(
+    ctx: AbstractAuthContext,
+    course_id: str,
+) -> CourseError.OnSuccess[CourseModel]:
+    course = await ctx.courses.find_by_id(course_id)
+    if course is None:
+        return CourseError.NOT_FOUND
+    if course.publicity is not CoursePublicity.PUBLIC:
+        return CourseError.NOT_FOUND
+
+    existing = await ctx.course_assigns.find_by_course_and_user(course_id, ctx.user.id)
+    if existing is not None:
+        return course
+
+    owner_materials = await ctx.course_materials.find_by_course_id(course_id)
+    seen_types: set[str] = set()
+    source_materials: list[CourseMaterialModel] = []
+    for mat in owner_materials:
+        if mat.type not in seen_types:
+            seen_types.add(mat.type)
+            source_materials.append(mat)
+
+    for mat in source_materials:
+        fresh_sections = [
+            MaterialSectionModel(
+                index=s.index,
+                title=s.title,
+                material=s.material,
+                is_completed=False,
+            )
+            for s in mat.data
+        ]
+        await ctx.course_materials.create(
+            course_id=course_id,
+            user_id=ctx.user.id,
+            material_type=mat.type,
+            data=fresh_sections,
+            title=mat.title,
+            description=mat.description,
+            is_visible=mat.is_visible,
+        )
+
+    await ctx.course_assigns.create(
+        course_id=course_id,
+        user_id=ctx.user.id,
+        relationship=CourseAssignRelationship.ASSIGNEE,
+    )
+
+    logger.info(
+        "User enrolled in public course",
+        extra={"course_id": course_id, "user_id": ctx.user.id},
+    )
+    return course

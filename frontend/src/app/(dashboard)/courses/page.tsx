@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   IconSearch,
   IconX,
@@ -11,6 +11,8 @@ import {
   IconCheck,
   IconAlertCircle,
   IconSparkles,
+  IconCompass,
+  IconUsers,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +20,7 @@ import { CreateCourseDialog } from "@/components/courses/create-course-dialog";
 import { api } from "@/lib/api";
 import { TOPIC_LABELS, DIFFICULTY_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth-store";
 import type { Course, CourseTopic, CourseDifficulty } from "@/lib/types";
 
 type GenerationJob =
@@ -105,11 +108,63 @@ function CourseCard({ course }: { course: Course }) {
   );
 }
 
+function PublicCourseCard({
+  course,
+  onEnrol,
+  enrolling,
+}: {
+  course: Course;
+  onEnrol: (id: string) => void;
+  enrolling: boolean;
+}) {
+  const colorClass = TOPIC_CARD_COLORS[course.topic] ?? "bg-muted border-border";
+  const topicLabel = TOPIC_LABELS[course.topic as CourseTopic] ?? "Course";
+  const diffLabel = DIFFICULTY_LABELS[course.difficulty as CourseDifficulty] ?? course.difficulty;
+
+  return (
+    <div
+      className={cn(
+        "relative flex flex-col gap-1.5 rounded-xl border px-3.5 py-3 w-48 shrink-0",
+        colorClass,
+      )}
+    >
+      <span className="text-xs font-semibold leading-snug line-clamp-2 text-foreground">
+        {course.name}
+      </span>
+      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+        <IconClock className="size-2.5 shrink-0" />
+        <span>{course.estimated_hours}h</span>
+        <span className="mx-0.5">·</span>
+        <span>{topicLabel}</span>
+      </div>
+      <div className="text-[10px] capitalize text-muted-foreground">{diffLabel}</div>
+      <button
+        onClick={() => onEnrol(course.id)}
+        disabled={enrolling}
+        className={cn(
+          "mt-1 flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold transition-colors",
+          "bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed",
+        )}
+      >
+        {enrolling ? (
+          <IconLoader2 className="size-2.5 animate-spin" />
+        ) : (
+          <IconUsers className="size-2.5" />
+        )}
+        {enrolling ? "Enrolling…" : "Enroll"}
+      </button>
+    </div>
+  );
+}
+
 export default function CoursesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user } = useAuthStore();
+  const isParent = user?.user_type === "parent";
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [selectedTopic, setSelectedTopic] = useState<CourseTopic | "all">(
     "all",
   );
@@ -117,6 +172,10 @@ export default function CoursesPage() {
     CourseDifficulty | "all"
   >("all");
   const [generationJob, setGenerationJob] = useState<GenerationJob | null>(null);
+
+  const [publicCourses, setPublicCourses] = useState<Course[]>([]);
+  const [publicLoading, setPublicLoading] = useState(true);
+  const [enrollingId, setEnrollingId] = useState<string | null>(null);
 
   const fetchCourses = useCallback(async () => {
     try {
@@ -128,9 +187,34 @@ export default function CoursesPage() {
     }
   }, []);
 
+  const fetchPublicCourses = useCallback(async () => {
+    try {
+      const data = await api<Course[]>("/api/v1/courses/explore");
+      setPublicCourses(data);
+    } catch {
+      // silently ignore
+    } finally {
+      setPublicLoading(false);
+    }
+  }, []);
+
+  const handleEnrol = useCallback(async (courseId: string) => {
+    setEnrollingId(courseId);
+    try {
+      await api<Course>(`/api/v1/courses/${courseId}/enrol`, { method: "POST" });
+      await Promise.all([fetchCourses(), fetchPublicCourses()]);
+      router.push(`/courses/${courseId}`);
+    } catch {
+      // silently ignore — could add a toast here
+    } finally {
+      setEnrollingId(null);
+    }
+  }, [fetchCourses, fetchPublicCourses, router]);
+
   useEffect(() => {
     fetchCourses().finally(() => setLoading(false));
-  }, [fetchCourses]);
+    if (!isParent) fetchPublicCourses();
+  }, [fetchCourses, fetchPublicCourses]);
 
   // Poll every 5s when any course is still generating.
   useEffect(() => {
@@ -270,7 +354,7 @@ export default function CoursesPage() {
         )}
       </div>
 
-      {/* Courses */}
+      {/* Your Courses */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <IconLoader2 className="size-8 animate-spin text-primary" />
@@ -285,17 +369,21 @@ export default function CoursesPage() {
               ? "Create your first AI-generated course to get started."
               : "Try adjusting your search or filters."}
           </p>
-          {courses.length === 0 ? (
-            <CreateCourseDialog
-              trigger={<Button size="sm">Create your first course</Button>}
-              onGenerationStart={handleGenerationStart}
-              onGenerationComplete={handleGenerationComplete}
-              onGenerationError={handleGenerationError}
-            />
-          ) : (
-            <Button variant="outline" size="sm" onClick={clearFilters} className="rounded-full">
-              Clear all filters
-            </Button>
+          {hasFilters && (
+            <>
+              {courses.length === 0 ? (
+              <CreateCourseDialog
+                trigger={<Button size="sm">Create your first course</Button>}
+                onGenerationStart={handleGenerationStart}
+                onGenerationComplete={handleGenerationComplete}
+                onGenerationError={handleGenerationError}
+              />
+              ) : (
+              <Button variant="outline" size="sm" onClick={clearFilters} className="rounded-full">
+                Clear all filters
+              </Button>
+              )}
+            </>
           )}
         </div>
       ) : (
@@ -312,6 +400,29 @@ export default function CoursesPage() {
         </section>
       )}
 
+      {/* Explore public courses — hidden for parents */}
+      {!isParent && !publicLoading && publicCourses.length > 0 && (
+        <section className="pt-4 border-t border-border/50">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <IconCompass className="size-4 text-muted-foreground" />
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+              Explore Public Courses{" "}
+              <span className="font-normal">({publicCourses.length})</span>
+            </h2>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4">
+            {publicCourses.map((course) => (
+              <PublicCourseCard
+                key={course.id}
+                course={course}
+                onEnrol={handleEnrol}
+                enrolling={enrollingId === course.id}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Background generation pill */}
       {generationJob && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
@@ -320,11 +431,11 @@ export default function CoursesPage() {
               "flex items-center gap-3 rounded-full px-4 py-2.5 shadow-lg text-sm font-medium pointer-events-auto",
               "border backdrop-blur-sm transition-all duration-300",
               generationJob.status === "generating" &&
-                "bg-background/95 border-border text-foreground",
+              "bg-background/95 border-border text-foreground",
               generationJob.status === "ready" &&
-                "bg-primary text-primary-foreground border-primary/20",
+              "bg-primary text-primary-foreground border-primary/20",
               generationJob.status === "error" &&
-                "bg-destructive/10 border-destructive/20 text-destructive",
+              "bg-destructive/10 border-destructive/20 text-destructive",
             )}
           >
             {generationJob.status === "generating" && (

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { GraduationCap } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CreateCourseDialog } from "@/components/courses/create-course-dialog";
 import { ROUTES } from "@/lib/constants";
 
 export function EmptyState() {
@@ -21,9 +22,9 @@ export function EmptyState() {
           pace with personalised materials.
         </p>
         <div className="flex gap-3">
-          <Link href={ROUTES.COURSE_CREATE}>
-            <Button>Create your first course</Button>
-          </Link>
+          <CreateCourseDialog
+            trigger={<Button>Create your first course</Button>}
+          />
           <Link href={ROUTES.COURSES}>
             <Button variant="secondary">Browse courses</Button>
           </Link>

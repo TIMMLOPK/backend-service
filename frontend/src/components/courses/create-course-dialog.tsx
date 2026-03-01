@@ -308,12 +308,30 @@ function StepGenerate({
   generating,
   phaseIndex,
   error,
+  countdown,
 }: {
   form: FormState;
   generating: boolean;
   phaseIndex: number;
   error: string | null;
+  countdown: number | null;
 }) {
+  if (countdown !== null) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 space-y-4">
+        <div className="relative">
+          <div className="h-20 w-20 rounded-full bg-green-500/10 flex items-center justify-center">
+            <IconCheck className="size-9 text-green-500" />
+          </div>
+        </div>
+        <h3 className="text-base font-semibold">Your course is ready!</h3>
+        <p className="text-sm text-muted-foreground text-center max-w-xs">
+          Navigating to your new course in {countdown} second{countdown !== 1 ? "s" : ""}…
+        </p>
+      </div>
+    );
+  }
+
   if (generating) {
     return (
       <div className="flex flex-col items-center justify-center py-10 space-y-4">
@@ -325,7 +343,8 @@ function StepGenerate({
         <h3 className="text-base font-semibold">Building your course...</h3>
         <p className="text-sm text-muted-foreground text-center max-w-xs">
           AI is designing your course structure and lectures. You&apos;ll be
-          taken there as soon as it&apos;s ready.
+          taken there as soon as it&apos;s ready. It usually takes a few minutes.
+          Don't close this page.
         </p>
         <div className="flex items-center gap-2 text-sm text-primary">
           <IconLoader2 className="size-4 animate-spin shrink-0" />
@@ -397,6 +416,7 @@ export function CreateCourseDialog({
 }: CreateCourseDialogProps) {
   const router = useRouter();
   const mountedRef = useRef(true);
+  const openRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -404,6 +424,8 @@ export function CreateCourseDialog({
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phaseIndex, setPhaseIndex] = useState(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [pendingCourseId, setPendingCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -419,6 +441,17 @@ export function CreateCourseDialog({
     }, 4000);
     return () => clearInterval(interval);
   }, [generating]);
+
+  useEffect(() => {
+    if (countdown === null || pendingCourseId === null) return;
+    if (countdown === 0) {
+      handleOpenChange(false);
+      router.push(`/courses/${pendingCourseId}`);
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => (c !== null ? c - 1 : null)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown, pendingCourseId]);
 
   function validateStep(s: number): boolean {
     const next: StepErrors = {};
@@ -459,9 +492,10 @@ export function CreateCourseDialog({
           }),
         },
       );
-      if (mountedRef.current) {
-        handleOpenChange(false);
-        router.push(`/courses/${result.course.id}`);
+      if (mountedRef.current && openRef.current) {
+        setGenerating(false);
+        setPendingCourseId(result.course.id);
+        setCountdown(3);
       } else {
         onGenerationComplete?.(result.course.id);
       }
@@ -480,6 +514,7 @@ export function CreateCourseDialog({
   }
 
   function handleOpenChange(next: boolean) {
+    openRef.current = next;
     setOpen(next);
     if (!next) {
       setStep(0);
@@ -487,6 +522,8 @@ export function CreateCourseDialog({
       setErrors({});
       setError(null);
       setGenerating(false);
+      setCountdown(null);
+      setPendingCourseId(null);
     }
   }
 
@@ -520,16 +557,30 @@ export function CreateCourseDialog({
               generating={generating}
               phaseIndex={phaseIndex}
               error={error}
+              countdown={countdown}
             />
           )}
         </div>
 
-        {generating ? (
-          <div className="flex justify-end pt-2 border-t">
-            <Button variant="ghost" size="sm" onClick={() => handleOpenChange(false)} className="text-muted-foreground text-xs">
-              Continue in background
-            </Button>
-          </div>
+        {generating || countdown !== null ? (
+          // <div className="flex justify-end pt-2 border-t">
+          //   <Button
+          //     variant="ghost"
+          //     size="sm"
+          //     className="text-muted-foreground text-xs"
+          //     onClick={() => {
+          //       if (countdown !== null && pendingCourseId) {
+          //         handleOpenChange(false);
+          //         router.push(`/courses/${pendingCourseId}`);
+          //       } else {
+          //         handleOpenChange(false);
+          //       }
+          //     }}
+          //   >
+          //     {countdown !== null ? "Go to course now" : "Continue in background"}
+          //   </Button>
+          // </div>
+          null
         ) : (
           <div className="flex justify-between pt-2 border-t">
             {step > 0 ? (

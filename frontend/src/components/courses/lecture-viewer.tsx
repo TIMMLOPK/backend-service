@@ -34,6 +34,22 @@ const MARKDOWN_COMPONENTS: Components = {
   a: ({ href, children }) => (
     <a href={href} className="text-primary underline underline-offset-2 hover:text-primary/80" target="_blank" rel="noopener noreferrer">{children}</a>
   ),
+  table: ({ children }) => (
+    <div className="my-4 w-full overflow-x-auto rounded-xl border border-border">
+      <table className="w-full border-collapse text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-muted/60">{children}</thead>,
+  tbody: ({ children }) => <tbody className="divide-y divide-border">{children}</tbody>,
+  tr: ({ children }) => <tr className="even:bg-muted/20 transition-colors">{children}</tr>,
+  th: ({ children }) => (
+    <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="px-4 py-2.5 text-foreground/80 align-top">{children}</td>
+  ),
 };
 
 interface LectureViewerProps {
